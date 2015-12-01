@@ -1,6 +1,5 @@
-function [ Model ] = train( X, Y )
+function [ Model ] = train( X, Y ,C)
 labels = unique(Y);
-C = 0.1;
 for i = 1:length(labels)
     label = double(Y);
     label(find(Y==labels(i))) = 1;
