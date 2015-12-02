@@ -2,6 +2,11 @@
 \usepackage{nips2013submit_e,times}
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{color}
 %\documentstyle[nips2013submit_09,times,art10]{article} % For LaTeX 2.09
 
 
@@ -77,6 +82,37 @@ Address \\
         \item Average HOG in each label class
     \end{itemize}
 
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=.4\linewidth]{label-distribution.png}
+        \caption{Distribution of the ground truth labels}
+    \end{figure}
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=.4\linewidth]{hist-overall.png}
+        \caption{Distribution of RGB across all 5000 images}
+    \end{figure}
+    \begin{figure}[h]
+        \begin{subfigure}{\linewidth}
+            \centering
+            \includegraphics[width=.18\linewidth]{hist-class-0.png}
+            \includegraphics[width=.18\linewidth]{hist-class-1.png}
+            \includegraphics[width=.18\linewidth]{hist-class-2.png}
+            \includegraphics[width=.18\linewidth]{hist-class-3.png}
+            \includegraphics[width=.18\linewidth]{hist-class-4.png}
+        \end{subfigure}
+        \begin{subfigure}{\linewidth}
+            \centering
+            \includegraphics[width=.18\linewidth]{hist-class-5.png}
+            \includegraphics[width=.18\linewidth]{hist-class-6.png}
+            \includegraphics[width=.18\linewidth]{hist-class-7.png}
+            \includegraphics[width=.18\linewidth]{hist-class-8.png}
+            \includegraphics[width=.18\linewidth]{hist-class-9.png}
+        \end{subfigure}
+        \caption{RGB histogram for each class}
+    \end{figure}
+    
+
 \section{Classification with K-means and K-Nearest Neighbours}
     \subsection{K-Means} % (fold)
     \label{ssub:K-Means}
@@ -118,11 +154,11 @@ Address \\
 
 % FIGURE SAMPLE
 \begin{figure}[h]
-\begin{center}
-%\framebox[4.0in]{$\;$}
-\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-\end{center}
-\caption{Sample figure caption.}
+    \begin{center}
+    %\framebox[4.0in]{$\;$}
+    \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+    \end{center}
+    \caption{Sample figure caption.}
 \end{figure}
 
 % TABLE SAMPLE
