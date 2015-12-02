@@ -114,8 +114,16 @@ Address \\
     
 
 \section{Classification with K-means and K-Nearest Neighbours}
+    The very first approach we tried was using the simple k-means and k-nearest neighbours approaches. These are simple to implement and help understand the dataset provided to use better. Details of problems with these techniques are provided in detail below.\\
     \subsection{K-Means} % (fold)
-    \label{ssub:K-Means}
+        The K-means clustering algorithm was the first technique we tried. The first attempt was to use the raw image data and find clusters in the pixel RGB values. This approach took a long to train but 
+
+        With the 
+
+        Training time for K-Means.\\
+
+
+
         \begin{itemize}
             \item K-means on raw images
             \item K-means on filtered images (filter banks, gabor filters)
@@ -137,7 +145,20 @@ Address \\
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \subsection{Results} % (fold)
     \label{sub:Results}
-    
+    % TABLE SAMPLE
+    \begin{table}[t]
+        \caption{Results with K-means clustering and K-nearest neighbours}
+        \begin{center}
+            \begin{tabular}{lll}
+                \multicolumn{1}{c}{\bf Technique} &\multicolumn{1}{c}{\bf Training time} &\multicolumn{1}{c}{\bf Accuracy}\\
+                \\ \hline \\
+                Dendrite         &Input terminal & 5\% \\
+                Axon             &Output terminal & 6\% \\
+                Soma             &Cell body (contains cell nucleus) & 7\% \\
+            \end{tabular}
+        \end{center}
+    \end{table}
+
     % subsection Results (end)
 
 \section{Support vector machines}
@@ -174,6 +195,9 @@ Address \\
         \end{tabular}
     \end{center}
 \end{table}
+
+\section{Future work}
+    Write something from the abstract of the paper\url{http://homes.cs.washington.edu/~pedrod/papers/nips12.pdf} we worked on.
 
 \subsubsection*{Acknowledgments}
 
