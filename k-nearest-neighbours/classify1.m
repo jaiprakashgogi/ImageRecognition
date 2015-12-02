@@ -1,7 +1,11 @@
-function [ Y ] = classify( model, X )
+function [ Y ] = classify1( model, X )
+    addpath('../vlfeat-0.9.20/toolbox/');
+    vl_setup;
+
     NUM_VOTES = 51;    
-    images = model.images;
+    hogs = model.hogs;
     labels = model.labels;
+    cell_size = model.cell_size;
     
     num_images = size(X, 1);
     Y = zeros(num_images, 1);
@@ -9,7 +13,9 @@ function [ Y ] = classify( model, X )
         if mod(i, 100) == 0
             disp(i);
         end
-        distances = pdist2(double(X(i, :)), double(images));
+        h = vl_hog(single(reshape(X(i, :), 32, 32, 3)), cell_size);
+        h = reshape(h, 1, 496);
+        distances = pdist2(double(h), double(hogs));
         [smallest, idx] = getNElements(distances, NUM_VOTES);
         
         votes = labels(idx);
