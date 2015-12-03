@@ -11,7 +11,7 @@
 
 \author{Jai Prakash \\ \textbf{email:} jprakash@andrew.cmu.edu}
 
-\title{10-601b: Mid-term report\\Image classification on CIFAR
+\title{10-601b: Mid-term report\\Image classification on CIFAR-10 dataset
 }
 
 
@@ -74,8 +74,11 @@ Machine learning techniques can be used for the task of classification. the basi
 
 The report is structured as follows. The first section talks about the initial data analysis done on the provided dataset. The next section talks about implementation using the basic classifiers like k-means and k-nearest neighbours. Finally, support vector machines are discussed in details followed by results.
 
+\subsection{Related work}
+The best results on CIFAR dataset is given by deep neural networks. The list of the latest are summarized in \url{http://zybler.blogspot.com/2011/02/table-of-results-for-cifar-10-dataset.html}. From the trends of the accuracy we can see that, the basic classifiers can achieve an accuracy of 72.28\%. To achieve better results, we would need to implement one of the variations of deep network.
+
 \section{Exploratory data analysis}
-    Before starting with the machine learning techniques, we tried to understand the dataset we were provided. We have been provided with a subset of the CIFAR-10 dataset. We looked that the \textbf{distribution of training labels} provided to us. This was to ensure the training samples are not skewed towards a certain label. We found that `airplane` class had the least number of training samples (about 470) and `frog` class had the maximum (about 520). The difference is minimal and should not affect training.
+    Before starting with the machine learning techniques, we tried to understand the dataset we were provided. We looked that the \textbf{distribution of training labels} provided to us. This was to ensure the training samples are not skewed towards a certain label. We found that `airplane` class had the least number of training samples (about 470) and `frog` class had the maximum (about 520). The difference is minimal and should not affect training.
 
     We looked at the \textbf{colour distribution} in the overall training dataset and the colour distribution in individual classes. The images seem to follow a normal distribution around different means and have different variances for the red, green and blue components. This was expected and should not affect training of our algorithms at all.
 
@@ -131,7 +134,7 @@ The report is structured as follows. The first section talks about the initial d
 \section{Classification with K-means and K-Nearest Neighbours}
     The very first approach we tried was using the simple k-means and k-nearest neighbours approaches. These are simple to implement and help understand the dataset provided to use better. Details of problems with these techniques are provided in detail below.
 \subsection{K-Means} % (fold)
-        The K-means clustering algorithm was the first technique we tried. The first attempt was to use the raw image data and find clusters in the pixel RGB values. This approach took a long to train and produced bad results. With a constant classifier (one that always returns a particular class), we would have about 10\% accuracy. We achieved about 15.3\% accuracy with the naive K-means classifier. %This improvement is very small compared to the effort required for the code.\\
+The first attempt was to use the raw image data and K-means clustering algorithm to find clusters in the pixel RGB values. This approach took a long to train and produced bad results. With a constant classifier (one that always returns a particular class), we would have about 10\% accuracy. We achieved about 15.3\% accuracy with the naive K-means classifier. %This improvement is very small compared to the effort required for the code.\\
 
         The next attempt was to cluster responses from a filter bank. We used two sets of filter banks - regular filters and \textbf{Gabor filters}. The training time for this increased further but produced a very tiny increase in accuracy (about 16.7\%). Given the training time required for K-means and the accuracy, we decided to try K-nearest neighbours. The voting algorithm would be robust to noise in the training inputs.
 
@@ -170,7 +173,7 @@ We used the K-nearest neighbours on three different feature spaces. The first wa
 	
 	To use the SVM as classifier for the CIFAR dataset which has 10 classes, we need to train each 10 separate SVM classifiers. To train any one of the classifiers for a particular class, there would be some positive samples and many negative samples. For 10 classes, one tenth of the data would be positive and nine tenth of the data would be negative sample. This imbalance between positive and the negative samples is overcome by randomly picking up  $n$ negative samples (equal to positive samples).
 	
-	In another experiment, in order to overcome the imbalance between the groups we trained each class with every other class. So class 1 is trained with class2,...class10 using SVM resulting in 9 SVMs for each class. So 10 classes we would have 90 SVMs. During classification the classification is found using the equation \ref{eqn:svm} for all the 90 SVMs.
+	In another experiment, in order to overcome the imbalance between the groups we trained each class with every other class. So class 1 is trained with class2,...class10 using SVM resulting in 9 SVMs for each class. So 10 classes we would have 90 SVMs. During classification the classification is found using the equation \ref{eqn:svm} for all the 90 SVMs. The SVM separating class1 to class2 is same as class2 to class1, which results in total of 45 training SVMs.
 	\begin{equation}
 	\label{eqn:svm}
 		y^{new} = W^T X + b	
@@ -213,10 +216,10 @@ Also, the margin in SVM plays an important role to decide the accuracy of the cl
         \begin{tabular}{ll}
         \multicolumn{1}{c}{\bf SVM technique}  &\multicolumn{1}{c}{\bf Accuracy}
         \\ \hline \\
-        Normal SVM         & 44 \% \\
-        Voted SVM	& 54\% \\
-        Voted SVM with data Normalization             & 50\% \\
-        Voted SVM with data and contrast normalization &51 \% \\
+        Normal SVM         & 44.3 \% \\
+        SVM with data Normalization             & 50.8\% \\
+        SVM with data and contrast normalization &51.9 \% \\
+        Voted SVM	& 54.3\% \\
         \end{tabular}
     \end{center}
     \caption{Results of calssification with SVMs}
@@ -250,21 +253,17 @@ Also, the margin in SVM plays an important role to decide the accuracy of the cl
 \subsubsection*{References}
 
 \small{
-    [1] Robert Gens, et al (2012) Discriminative learning of sum-product networks {\it Neural Information Processing Systems}
+[1] Navneet Dalal and Bill Triggs, Histograms of Oriented Gradients for Human Detection,\textit{CVPR, 2005}
 
-[2] Alexander, J.A. \& Mozer, M.C. (1995) Template-based algorithms
-for connectionist rule extraction. In G. Tesauro, D. S. Touretzky
-and T.K. Leen (eds.), {\it Advances in Neural Information Processing
-Systems 7}, pp. 609-616. Cambridge, MA: MIT Press.
+%[2] David Lowe, et al Distinctive Image Features from Scale-Invariant Keypoints, \textit{IJCV, 2004}
 
-[3] Bower, J.M. \& Beeman, D. (1995) {\it The Book of GENESIS: Exploring
-Realistic Neural Models with the GEneral NEural SImulation System.}
-New York: TELOS/Springer-Verlag.
+[2] Christian Saigian, et al. Rapid Biologically-Inspired Scene Classification Using Features
+Shared with Visual Attention, Pattern Analysis and Machine Intelligence, 2007
 
-[4] Hasselmo, M.E., Schnell, E. \& Barkai, E. (1995) Dynamics of learning
-and recall at excitatory recurrent synapses and cholinergic modulation
-in rat hippocampal region CA3. {\it Journal of Neuroscience}
-{\bf 15}(7):5249-5262.
-}
+[3] R.Muralidharan, et al. Object Recognition Using Support Vector Machine Augmented
+by RST Invariants, \textit{IJCSI, 2011}
+
+[4] R Gens, et al. Discriminative learning of sum-product networks, Washington University,
+2012
 
 \end{document}
