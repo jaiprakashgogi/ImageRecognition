@@ -1,23 +1,35 @@
 function [Y] = classify(Model, data)
-cellSize = 8 ;
 X = [];
 for i = 1:size(data,1)
-	im = reshape(single(data(i, :)), [32 32 ,3]);
-	hog = vl_hog(im, cellSize, 'verbose') ;
-	X = cat(1, X, hog(:)');
+	x = vector2im(data(i,:));
+	X = cat(1, X, x);
 end
 
+nClass = length(Model);
+nSubClass = length(Model{1});
+
 X = double(X);
-y = zeros(size(X,1), length(Model));
+y = zeros(size(X,1), nClass, nSubClass);
 for n = 1:size(X,1)
-    for i = 1:length(Model)
-        model = Model{i};
-        y(n,i) = model.w*X(n,:)' + model.b;
+    for i = 1:nClass
+        for j = 1:nSubClass
+            model = Model{i}{j};
+            y(n,i,j) = model.w*X(n,:)' + model.b;
+        end
     end
 end
 
-[~,idx] = max(y');
+
+label = zeros(size(X,1), nClass);
+for n = 1:size(X,1)
+    for i = 1:nClass
+        p = y(n,i,:);
+        p = p(:);
+        label(n,i) = length(find(p>0));
+    end
+end
+
+[~,idx] = max(label');
 Y = idx' - ones(size(idx',1), 1);
 
 end
-
