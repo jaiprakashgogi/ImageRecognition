@@ -1,9 +1,0 @@
-function [ h ] = img_hist( img )
-    img_sq = reshape(img, 32, 32, 3);
-    c1 = squeeze(img(:, :, 1));
-    c2 = squeeze(img(:, :, 2));
-    c3 = squeeze(img(:, :, 3));
-    
-    f
-end
-
