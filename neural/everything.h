@@ -42,3 +42,4 @@ bool file_exists (const std::string& name);
 
 // visualize.cpp
 cv::Mat visualize_patches(cv::Mat, cv::Mat);
+cv::Mat visualize_patches_std(cv::Mat, cv::Mat);

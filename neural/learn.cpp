@@ -7,33 +7,30 @@ cv::Mat zca_whitening(cv::Mat data, cv::Mat mean, int mean_j, cv::Mat u) {
     const int num_samples = data.rows;
     const int sample_size = data.cols;
 
-    cv::Mat ret = cv::Mat(data.rows, data.cols, CV_32FC1);
+    cv::Mat ret = cv::Mat::zeros(data.rows, data.cols, CV_32FC1);
 
 #ifdef _USE_OPENMP
 #pragma omp parallel for
 #endif
     for(j=0;j<num_samples;j++) {
-        float mval = mean.at<float>(0, j);
-        cv::Mat sub = data.row(j) - mval;
+        //float mval = mean.at<float>(0, j);
+        cv::Mat sub = data.row(j) - mean;
 
         //printf("Size of data row = %d*%d\n", data.row(j).rows, data.row(j).cols);
         //printf("Size of sub row = %d*%d\n", sub.rows, sub.cols);
         //printf("Size of u row = %d*%d\n", u.rows, u.cols);
+        //printf("Size of mean row = %d*%d\n", mean.rows, mean.cols);
 
         for(int i=0;i<sample_size;i++) {
-            cv::Scalar total = cv::sum(sub.at<float>(1, i) * u.row(i));
-            ret.at<float>(j, i) = total[0];
+            cv::Scalar total = cv::sum(sub.at<float>(0, i) * u.row(i));
+            ret.at<float>(j, i) = (float)total[0];
         }
 
         if(j%10000 == 0) 
             printf("Done\n");
         //data.row(j) = sub.mul(u.reshape(1, 1));
-        //nv_matrix_t *sub = nv_matrix_alloc(x->n, 1);
     
         // ZCAWhitend_x = (x - mean) * U
-        // nv_vector_sub(sub, 0, x, x_j, mean, mean_j);
-        //nv_vector_mulmtr(x, x_j, sub, 0, u);
-        //nv_matrix_free(&sub);
     }
 
     return ret;
@@ -59,16 +56,19 @@ STOP_TIMING(cov_timer);
 
 DECLARE_TIMING(eig_timer);
 START_TIMING(eig_timer);
-    cv::eigen(cov, eigenvalues, eigenvectors);
+    cv::Mat temp;
+    cov.convertTo(temp, CV_32FC1);
+    cv::eigen(temp, eigenvalues, eigenvectors);
 STOP_TIMING(eig_timer);
 
+    cout << eigenvalues << endl;
     printf("Done calculating eigenvectors");
     printf("Calculation too %d ms\n", (int)GET_TIMING(eig_timer));
 
     int sz[2];
     sz[0] = sample_size; sz[1] = sample_size;
-    cv::Mat d = cv::Mat(2, sz, CV_32FC1);
-    cv::Mat v = cv::Mat(2, sz, CV_32FC1);
+    cv::Mat d = cv::Mat::zeros(2, sz, CV_32FC1);
+    cv::Mat v = cv::Mat::zeros(2, sz, CV_32FC1);
 
     for(int i=0;i<sample_size;i++) {
         d.at<float>(i, i) = sqrtf(1.0f / (eigenvalues.at<float>(i) + epsilon));
@@ -104,20 +104,17 @@ cv::Mat standardize(cv::Mat patches, float epsilon) {
 #endif
     for(int i=0;i<num_rows;i++) {
         cv::Mat current = ret.row(i);
-        cv::Mat temp, temp2;
+        cv::Mat temp2;
 
-        current.convertTo(temp, CV_32FC1);
-    
         cv::Scalar t = cv::mean(current);
         float mean = t[0];
-        cv::pow(temp-mean, 2, temp2);
+        cv::pow(current-mean, 2, temp2);
         t = cv::sum(temp2)/(3*PATCH_SIZE*PATCH_SIZE);
         float var = t[0];
         float sd = sqrtf(var + epsilon);
 
-        temp = (temp - mean); // sd;
-        temp.convertTo(current, CV_8UC1);
-        //current = current / sd;
+        // Varies from about -1 to 1
+        ret.row(i) = (current - mean) / sd;
     }
 
     return ret;
@@ -146,7 +143,7 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
     }
 
     //const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
-    const int num_samples = 100;
+    const int num_samples = 10;
     const int size_minus_patch = (IMG_SIZE-PATCH_SIZE) * (IMG_SIZE-PATCH_SIZE);
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat::zeros(size_minus_patch*num_samples, rcount, CV_8UC1);
@@ -246,18 +243,22 @@ int main(int argc, char* argv[]) {
     cv::Mat patches_std = standardize(patches, STANDARDIZE_EPSILON);
     printf("Memory usage: %d KB\n", getMemValue());
 
-    cv::Mat visual = visualize_patches(images[0], patches.rowRange(0, 676));
-    cv::Mat visual_std = visualize_patches(images[0], 255+patches_std.rowRange(0, 676));
-    cv::imshow("Visualizing patches", visual);
-    cv::imshow("Visualizing patches - standardized", visual_std);
-    cv::waitKey(0);
+    //cv::Mat visual = visualize_patches(images[0], patches.rowRange(0, 676));
+    //cv::Mat visual_std = visualize_patches_std(images[0], patches_std.rowRange(0, 676));
+    //cv::imshow("Visualizing patches", visual);
+    //cv::imshow("Visualizing patches - standardized", visual_std);
+    //cv::waitKey(0);
 
     printf("Starting calculating the covariance matrix\n");
     zca_learn(&zca_m, 0, &zca_u, patches, 0.1f);
+    //cout << zca_u << endl;
     printf("Memory usage after zca learning: %d KB\n", getMemValue());
 
     printf("Size of zca_u = %d*%d\n", zca_u.rows, zca_u.cols);
     cv::Mat patches_whitened = zca_whitening(patches_std, zca_m, 0, zca_u);
+    cv::Mat visual_whitened = visualize_patches_std(images[0], patches_whitened.rowRange(0, 676));
+    cv::imshow("Visualizing patches - whitened", visual_whitened);
+    cv::waitKey(0);
 
     printf("Number of rows = %d\n", patches.rows);
     printf("Memory usage after whitening: %d KB\n", getMemValue());
