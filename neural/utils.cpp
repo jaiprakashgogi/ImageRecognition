@@ -27,3 +27,22 @@ int getMemValue() { //Note: this value is in KB!
     fclose(file);
     return result;
 }
+
+cv::Mat shuffle_rows(const cv::Mat &matrix) {
+  std::vector <int> seeds;
+  for (int cont = 0; cont < matrix.rows; cont++)
+    seeds.push_back(cont);
+
+  cv::randShuffle(seeds);
+
+  cv::Mat output;
+  for (int cont = 0; cont < matrix.rows; cont++)
+    output.push_back(matrix.row(seeds[cont]));
+
+  return output;
+}
+
+bool file_exists(const std::string& name) {
+    struct stat buffer;   
+    return (stat (name.c_str(), &buffer) == 0); 
+}

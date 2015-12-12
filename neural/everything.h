@@ -5,6 +5,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videostab.hpp>
 #include <vector>
+#include <sys/stat.h>
+#include <omp.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -24,8 +26,14 @@
 ////////////////////////////////////////////////////////
 // Function prototypes
 
+// learn.cpp
+cv::Mat load_data(char* filename);
+int main(int argc, char* argv[]);
+
 // utils.cpp
 int getMemValue();
+cv::Mat shuffle_rows(const cv::Mat &matrix);
+bool file_exists (const std::string& name);
 
 // visualize.cpp
 cv::Mat visualize_patches(cv::Mat, cv::Mat);

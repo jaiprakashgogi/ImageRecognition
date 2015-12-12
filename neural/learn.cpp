@@ -2,11 +2,37 @@
 
 using namespace std;
 
-void extract_patches(cv::Mat patches, cv::Mat scratch, int patch_size) {
+cv::Mat standardize(cv::Mat patches, float epsilon) {
+    cv::Mat ret;
+    patches.convertTo(ret, CV_32FC1);
 
+    const int num_rows = patches.rows;
+
+    printf("Standardizing all patches\n");
+    // TODO does this need to be per-channel? I believe now.
+
+#ifdef _USE_OPENMP
+#pragma omp parallel for
+#endif
+    for(int i=0;i<num_rows;i++) {
+        cv::Mat current = ret.row(i);
+        cv::Mat temp2;
+    
+        cv::Scalar t = cv::mean(current);
+        float mean = t[0];
+        cv::pow(current-mean, 2, temp2);
+        t = cv::sum(temp2)/(3*PATCH_SIZE*PATCH_SIZE);
+        float var = t[0];
+        float sd = sqrtf(var + epsilon);
+
+        current = current - mean;
+        current = current / sd;
+    }
+
+    return ret;
 }
 
-void load_data(cv::Mat samples, char* filename) {
+cv::Mat load_data(char* filename) {
     FILE *fp;
     int size;
 
@@ -15,7 +41,7 @@ void load_data(cv::Mat samples, char* filename) {
     fp = fopen(filename, "rb");
     if(!fp) {
         printf("The file does not exist: %s\n", filename);
-        return;
+        return cv::Mat();
     }
 
     // Find the number of elements in this
@@ -25,10 +51,11 @@ void load_data(cv::Mat samples, char* filename) {
     // Ensure we have an exact division
     if(size % (NUM_BYTES_PER_IMG+1) != 0) {
         printf("Non-integer number of elements in the given file. Exitting.\n");
-        return;
+        return cv::Mat();
     }
 
-    const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
+    //const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
+    const int num_samples = 100;
     const int size_minus_patch = (IMG_SIZE-PATCH_SIZE) * (IMG_SIZE-PATCH_SIZE);
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat::zeros(size_minus_patch*num_samples, rcount, CV_8UC1);
@@ -60,13 +87,13 @@ void load_data(cv::Mat samples, char* filename) {
         // Read label for this sample
         if(fread(&label, sizeof(uchar), 1, fp) != 1) {
             printf("Unable to read label for image %d\n", sample_count);
-            return;
+            return cv::Mat();
         }
 
         // Read pixel data
         if(fread(img_data, sizeof(uchar), NUM_BYTES_PER_IMG, fp) != NUM_BYTES_PER_IMG) {
             printf("Unable to read image data for image %d\n", sample_count);
-            return;
+            return cv::Mat();
         }
 
         // Generate a proper OpenCV matrix
@@ -106,7 +133,7 @@ void load_data(cv::Mat samples, char* filename) {
     printf("It took %d ms to read the entire data file\n", (int)GET_TIMING(file_reader));
 
     fclose(fp);
-    return;
+    return shuffle_rows(data);
 }
 
 int main(int argc, char* argv[]) {
@@ -116,8 +143,11 @@ int main(int argc, char* argv[]) {
     cv::Mat zca_u = cv::Mat(rcount, rcount, CV_32FC1);
     cv::Mat zca_m = cv::Mat(rcount, 1, CV_32FC1);
 
-    cv::Mat test;
-    load_data(test, "../data/data_batch_1.bin");
+    // Reading this from a file takes longer than executing this.
+    cv::Mat patches = load_data("../data/data_batch_1.bin");
+    patches = standardize(patches, STANDARDIZE_EPSILON);
+
+    printf("Number of rows = %d\n", patches.rows);
 
     printf("Memory usage: %d KB\n", getMemValue());
     return 0;
