@@ -2,6 +2,43 @@
 
 using namespace std;
 
+cv::Mat zca_white(cv::Mat data) {
+    printf("Starting caluculation\n");
+    cv::Mat avg = feature_mean(data);
+
+    cv::Mat ret = data.clone();
+
+    const int num_vectors = data.rows;
+    const int feature_size = data.cols;
+
+    for(int i=0;i<num_vectors;i++) {
+        ret.row(i) -= avg;
+    }
+
+    cv::Mat tr_data;
+    cv::transpose(data, tr_data);
+    cv::Mat sigma = (data * tr_data) / feature_size;
+    cv::SVD svd(sigma, cv::SVD::FULL_UV);
+    
+    cv::Mat U, Vt, S;
+    svd.compute(sigma, S, U, Vt);
+
+    printf("Done caluculation\n");
+    
+    /*MatrixXd avg = x.rowwise().mean();
+    x = x - avg.replicate(1,x.cols());
+    MatrixXd sigma = x * x.transpose() * (1.0 / x.cols());
+    JacobiSVD<MatrixXd> svd(sigma, ComputeFullU | ComputeFullV);
+    MatrixXd U = svd.matrixU();
+    MatrixXd V = svd.matrixV();
+    MatrixXd S = svd.singularValues();
+    double epsilon = 0.1;
+    MatrixXd term1 = S + MatrixXd::Ones(S.rows(),S.cols()) * epsilon;
+    MatrixXd term2 = reciprocalMat(sqrtMat(term1));
+    MatrixXd xZCAWhiteMat = U * term2.asDiagonal() * U.transpose();
+    return xZCAWhiteMat;*/
+}
+
 cv::Mat zca_whitening(cv::Mat data, cv::Mat mean, int mean_j, cv::Mat u) {
     int j=0;
     const int num_samples = data.rows;
@@ -15,6 +52,7 @@ cv::Mat zca_whitening(cv::Mat data, cv::Mat mean, int mean_j, cv::Mat u) {
     for(j=0;j<num_samples;j++) {
         //float mval = mean.at<float>(0, j);
         cv::Mat sub = data.row(j) - mean;
+        //sub.copyTo(ret.row(j));
 
         //printf("Size of data row = %d*%d\n", data.row(j).rows, data.row(j).cols);
         //printf("Size of sub row = %d*%d\n", sub.rows, sub.cols);
@@ -22,7 +60,8 @@ cv::Mat zca_whitening(cv::Mat data, cv::Mat mean, int mean_j, cv::Mat u) {
         //printf("Size of mean row = %d*%d\n", mean.rows, mean.cols);
 
         for(int i=0;i<sample_size;i++) {
-            cv::Scalar total = cv::sum(sub.at<float>(0, i) * u.row(i));
+            //cv::Scalar total = cv::sum(sub.at<float>(0, i) * u.row(i));
+            cv::Scalar total = sub.dot(u.row(i));
             ret.at<float>(j, i) = (float)total[0];
         }
 
@@ -46,6 +85,8 @@ DECLARE_TIMING(cov_timer);
 START_TIMING(cov_timer);
     cv::calcCovarMatrix(data, cov, cov_mean, CV_COVAR_NORMAL + CV_COVAR_ROWS, CV_32F);
 STOP_TIMING(cov_timer);
+
+    cov_mean.copyTo(*mean);
 
     printf("Cov matrix is %d*%d\n", cov.rows, cov.cols);
     printf("cov_mean is %d*%d\n", cov_mean.rows, cov_mean.cols);
@@ -87,7 +128,6 @@ STOP_TIMING(eig_timer);
     cv::transpose(*u, tr);
     tr.copyTo(*u);
 
-    cov_mean.copyTo(*mean);
 }
 
 cv::Mat standardize(cv::Mat patches, float epsilon) {
@@ -143,7 +183,7 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
     }
 
     //const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
-    const int num_samples = 10;
+    const int num_samples = 100;
     const int size_minus_patch = (IMG_SIZE-PATCH_SIZE) * (IMG_SIZE-PATCH_SIZE);
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat::zeros(size_minus_patch*num_samples, rcount, CV_8UC1);
@@ -251,12 +291,12 @@ int main(int argc, char* argv[]) {
 
     printf("Starting calculating the covariance matrix\n");
     zca_learn(&zca_m, 0, &zca_u, patches, 0.1f);
-    //cout << zca_u << endl;
+    cout << zca_m << endl;
     printf("Memory usage after zca learning: %d KB\n", getMemValue());
 
     printf("Size of zca_u = %d*%d\n", zca_u.rows, zca_u.cols);
-    cv::Mat patches_whitened = zca_whitening(patches_std, zca_m, 0, zca_u);
-    cv::Mat visual_whitened = visualize_patches_std(images[0], patches_whitened.rowRange(0, 676));
+    cv::Mat patches_whitened = zca_white(patches_std);
+    cv::Mat visual_whitened = visualize_patches_zca(images[0], patches_whitened.rowRange(0, 676));
     cv::imshow("Visualizing patches - whitened", visual_whitened);
     cv::waitKey(0);
 
