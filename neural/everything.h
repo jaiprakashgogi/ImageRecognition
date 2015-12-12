@@ -24,10 +24,15 @@
 #define CLEAR_AVERAGE_TIMING(s) timeTally_##s = 0; countTally_##s = 0
 
 ////////////////////////////////////////////////////////
+// Structs
+
+
+////////////////////////////////////////////////////////
 // Function prototypes
 
 // learn.cpp
 cv::Mat load_data(char* filename);
+void zca_learn(cv::Mat *mean, int mean_j, cv::Mat *u, const cv::Mat data, float epsilon);
 int main(int argc, char* argv[]);
 
 // utils.cpp
