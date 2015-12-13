@@ -26,7 +26,7 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
 
     const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
     //const int num_samples = 100;
-    const int size_minus_patch = (IMG_SIZE-PATCH_SIZE) * (IMG_SIZE-PATCH_SIZE);
+    const int size_minus_patch = (IMG_SIZE-PATCH_SIZE+1) * (IMG_SIZE-PATCH_SIZE+1);
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat::zeros(size_minus_patch*num_samples, rcount, CV_8UC1);
     printf("Number of images in dataset = %d\n", num_samples);
@@ -37,8 +37,8 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
 
     // Loop through the entire dataset
     int sample_count = 0;
-    int sz[3] = {IMG_SIZE*PATCH_SIZE*PATCH_SIZE, IMG_SIZE-PATCH_SIZE, IMG_SIZE-PATCH_SIZE};
-    cv::Mat patches = cv::Mat(3, sz, CV_32FC1, cv::Scalar(0));
+    //int sz[3] = {IMG_SIZE*PATCH_SIZE*PATCH_SIZE, IMG_SIZE-PATCH_SIZE+1, IMG_SIZE-PATCH_SIZE};
+    //cv::Mat patches = cv::Mat(3, sz, CV_32FC1, cv::Scalar(0));
     cv::Mat *scratch_channel = new cv::Mat[3];
     cv::Mat scratch;
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     }
 
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
-    cv::Mat data = cv::Mat(rcount, SAMPLES, CV_32FC1);
+    //cv::Mat data = cv::Mat(rcount, SAMPLES, CV_32FC1);
     //cv::Mat zca_u = cv::Mat(rcount, rcount, CV_32FC1);
     //cv::Mat zca_m = cv::Mat(rcount, 1, CV_32FC1);
     vector<cv::Mat> images;
@@ -109,10 +109,12 @@ int main(int argc, char* argv[]) {
     // Reading this from a file takes longer than executing this.
     printf("Memory usage initially: %d KB\n", getMemValue());
     cv::Mat patches = load_data(argv[1], images);
+    cout << "Size of patches: " << patches.rows << "*" << patches.cols <<  endl;
     printf("Number of images loaded = %ld\n", (long)images.size());
     printf("Memory usage after loading images: %d KB\n", getMemValue());
 
     cv::Mat patches_std = normalize(patches, STANDARDIZE_EPSILON);
+    cout << "Size of patches_std: " << patches_std.rows << "*" << patches_std.cols <<  endl;
     printf("Memory usage: %d KB\n", getMemValue());
 
     //cv::Mat visual = visualize_patches(images[0], patches.rowRange(0, 676));
@@ -130,6 +132,7 @@ int main(int argc, char* argv[]) {
     mean = cv::Mat::zeros(1, PATCH_SIZE * PATCH_SIZE * 3, CV_32FC1);
     whitener = cv::Mat::zeros(PATCH_SIZE*PATCH_SIZE*3, PATCH_SIZE*PATCH_SIZE*3, CV_32FC1);
     cv::Mat patches_whitened = zca_white(patches_std, mean, whitener);
+    cout << "Size of patches_whitened: " << patches_whitened.rows << "*" << patches_whitened.cols <<  endl;
     printf("Memory usage after zca learning: %d KB\n", getMemValue());
 
     cv::FileStorage fs_whitener("./whitener.yaml", cv::FileStorage::WRITE);
@@ -138,8 +141,8 @@ int main(int argc, char* argv[]) {
     fs_whitener.release();
 
     /*for(int i=0;i<images.size();i++) {
-        cv::Mat visual_normalized = visualize_patches_std(images[i], patches_std.rowRange(676*i, (i+1)*676));
-        cv::Mat visual_whitened = visualize_patches_zca(images[i], patches_whitened.rowRange(676*i, (i+1)*676));
+        cv::Mat visual_normalized = visualize_patches_std(images[i], patches_std.rowRange(729*i, (i+1)*729));
+        cv::Mat visual_whitened = visualize_patches_zca(images[i], patches_whitened.rowRange(729*i, (i+1)*729));
         cv::imshow("Visualizing patches - normalized", visual_normalized);
         cv::imshow("Visualizing patches - whitened", visual_whitened);
         cv::waitKey(0);

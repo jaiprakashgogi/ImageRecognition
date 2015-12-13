@@ -2,8 +2,8 @@
 
 using namespace std;
 cv::Mat visualize_patches(cv::Mat src, cv::Mat data) {
-    const int num_rows = (IMG_SIZE-PATCH_SIZE + 1) * PATCH_SIZE;
-    const int num_cols = IMG_SIZE + 5 + (IMG_SIZE-PATCH_SIZE + 1) * PATCH_SIZE;
+    const int num_rows = (IMG_SIZE-PATCH_SIZE + 2) * PATCH_SIZE;
+    const int num_cols = IMG_SIZE + 5 + (IMG_SIZE-PATCH_SIZE + 2) * PATCH_SIZE;
     const int patch_area = PATCH_SIZE * PATCH_SIZE;
     cv::Mat visual = cv::Mat::zeros(num_rows, num_cols, CV_8UC3);
 
@@ -11,8 +11,8 @@ cv::Mat visualize_patches(cv::Mat src, cv::Mat data) {
     src.copyTo(aux);
 
     int i=0;
-    for(int y=0;y<IMG_SIZE-PATCH_SIZE;y++) {
-        for(int x=0;x<IMG_SIZE-PATCH_SIZE;x++) {
+    for(int y=0;y<IMG_SIZE-PATCH_SIZE+1;y++) {
+        for(int x=0;x<IMG_SIZE-PATCH_SIZE+1;x++) {
             int startx = IMG_SIZE + 5 + PATCH_SIZE * x;
             int endx = IMG_SIZE + 5 + PATCH_SIZE * (x+1);
             int starty = PATCH_SIZE * y;
@@ -29,8 +29,8 @@ cv::Mat visualize_patches(cv::Mat src, cv::Mat data) {
 }
 
 cv::Mat visualize_patches_std(cv::Mat src, cv::Mat data) {
-    const int num_rows = (IMG_SIZE-PATCH_SIZE + 1) * PATCH_SIZE;
-    const int num_cols = IMG_SIZE + 5 + (IMG_SIZE-PATCH_SIZE + 1) * PATCH_SIZE;
+    const int num_rows = (IMG_SIZE-PATCH_SIZE + 2) * PATCH_SIZE;
+    const int num_cols = IMG_SIZE + 5 + (IMG_SIZE-PATCH_SIZE + 2) * PATCH_SIZE;
     const int patch_area = PATCH_SIZE * PATCH_SIZE;
     cv::Mat visual = cv::Mat::zeros(num_rows, num_cols, CV_8UC3);
 
@@ -38,8 +38,8 @@ cv::Mat visualize_patches_std(cv::Mat src, cv::Mat data) {
     src.copyTo(aux);
 
     int i=0;
-    for(int y=0;y<IMG_SIZE-PATCH_SIZE;y++) {
-        for(int x=0;x<IMG_SIZE-PATCH_SIZE;x++) {
+    for(int y=0;y<IMG_SIZE-PATCH_SIZE+1;y++) {
+        for(int x=0;x<IMG_SIZE-PATCH_SIZE+1;x++) {
             int startx = IMG_SIZE + 5 + PATCH_SIZE * x;
             int endx = IMG_SIZE + 5 + PATCH_SIZE * (x+1);
             int starty = PATCH_SIZE * y;
@@ -68,8 +68,8 @@ cv::Mat visualize_patches_zca(cv::Mat src, cv::Mat data) {
     src.copyTo(aux);
 
     int i=0;
-    for(int y=0;y<IMG_SIZE-PATCH_SIZE;y++) {
-        for(int x=0;x<IMG_SIZE-PATCH_SIZE;x++) {
+    for(int y=0;y<IMG_SIZE-PATCH_SIZE+1;y++) {
+        for(int x=0;x<IMG_SIZE-PATCH_SIZE+1;x++) {
             int startx = IMG_SIZE + 5 + PATCH_SIZE * x;
             int endx = IMG_SIZE + 5 + PATCH_SIZE * (x+1);
             int starty = PATCH_SIZE * y;

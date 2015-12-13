@@ -34,8 +34,8 @@ cv::Mat extract_patches(cv::Mat img, int patch_size) {
     const int num_rows = img.rows;
     const int num_cols = img.cols;
 
-    const int num_patch_rows = num_rows - patch_size;
-    const int num_patch_cols = num_cols - patch_size;
+    const int num_patch_rows = num_rows - patch_size + 1;
+    const int num_patch_cols = num_cols - patch_size + 1;
 
     cv::Mat patches = cv::Mat::zeros(num_patch_rows * num_patch_cols, patch_size*patch_size*3, CV_8UC1);
     int idx = 0;
