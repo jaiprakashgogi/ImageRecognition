@@ -293,9 +293,8 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
 int main(int argc, char* argv[]) {
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat(rcount, SAMPLES, CV_32FC1);
-    cv::Mat centroids = cv::Mat(rcount, CENTROIDS, CV_32FC1);
-    cv::Mat zca_u = cv::Mat(rcount, rcount, CV_32FC1);
-    cv::Mat zca_m = cv::Mat(rcount, 1, CV_32FC1);
+    //cv::Mat zca_u = cv::Mat(rcount, rcount, CV_32FC1);
+    //cv::Mat zca_m = cv::Mat(rcount, 1, CV_32FC1);
     vector<cv::Mat> images;
 
     // Reading this from a file takes longer than executing this.
@@ -314,19 +313,34 @@ int main(int argc, char* argv[]) {
     //cv::waitKey(0);
 
     printf("Starting calculating the covariance matrix\n");
-    zca_learn(&zca_m, 0, &zca_u, patches, 0.1f);
-    cout << zca_m << endl;
+    //zca_learn(&zca_m, 0, &zca_u, patches, 0.1f);
+    //cout << zca_m << endl;
+    //printf("Size of zca_u = %d*%d\n", zca_u.rows, zca_u.cols);
+    cv::Mat patches_whitened = zca_white(patches_std);
     printf("Memory usage after zca learning: %d KB\n", getMemValue());
 
-    printf("Size of zca_u = %d*%d\n", zca_u.rows, zca_u.cols);
-    for(int i=0;i<images.size();i++) {
-        cv::Mat patches_whitened = zca_white(patches_std);
+    /*for(int i=0;i<images.size();i++) {
         cv::Mat visual_whitened = visualize_patches_zca(images[i], patches_whitened.rowRange(676*i, (i+1)*676));
         cv::imshow("Visualizing patches - whitened", visual_whitened);
         cv::waitKey(0);
-    }
+    }*/
+
+    cout << "Starting kmeans on the whitened data" << endl;
+    DECLARE_TIMING(kmeans_timer);
+    cv::Mat labels;
+    cv::Mat centroids;
+    cv::TermCriteria termcrit(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 100, 0.01);
+    START_TIMING(kmeans_timer);
+    cv::kmeans(patches_whitened, CENTROIDS, labels, termcrit, KMEANS_TRIALS, cv::KMEANS_PP_CENTERS, centroids);
+    STOP_TIMING(kmeans_timer);
+    cout << "Done with kmeans" << endl;
+    cout << "It took " << GET_TIMING(kmeans_timer) << " ms to solve the centroids" << endl;
+
+    cv::FileStorage fs("./centroids.yaml", cv::FileStorage::WRITE);
+    fs << "centroids" << centroids;
+    fs.release();
 
     printf("Number of rows = %d\n", patches.rows);
-    printf("Memory usage after whitening: %d KB\n", getMemValue());
+    printf("Memory usage after kmeans: %d KB\n", getMemValue());
     return 0;
 }

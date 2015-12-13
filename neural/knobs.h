@@ -2,6 +2,7 @@
 #define PATCH_SIZE 6
 #define IMG_SIZE 32
 #define STANDARDIZE_EPSILON 10.0f
+#define KMEANS_TRIALS 1
 
 #define _USE_OPENMP
 
