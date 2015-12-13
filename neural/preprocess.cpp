@@ -6,7 +6,7 @@ cv::Mat normalize(cv::Mat patches, float epsilon) {
 
     const int num_rows = patches.rows;
 
-    printf("Standardizing all patches\n");
+    //printf("Standardizing all patches\n");
     // TODO does this need to be per-channel? I believe now.
 
 #ifdef _USE_OPENMP

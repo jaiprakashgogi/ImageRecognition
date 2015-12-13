@@ -3,7 +3,7 @@ LIBRARIES = -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -
 FLAGS = -std=c++0x -ggdb -O3 -Ofast -fopenmp -Wno-write-strings
 
 learn:
-	g++ learn_neural.cpp $(EXTRAS) $(LIBRARIES) $(FLAGS) -o learn_neural
+	g++ neural.cpp $(EXTRAS) $(LIBRARIES) $(FLAGS) -o learn_neural
 
 centroids:
 	g++ learn.cpp $(EXTRAS) $(LIBRARIES) $(FLAGS) -o learn_centroids
