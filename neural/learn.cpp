@@ -24,8 +24,8 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
         return cv::Mat();
     }
 
-    //const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
-    const int num_samples = 100;
+    const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
+    //const int num_samples = 100;
     const int size_minus_patch = (IMG_SIZE-PATCH_SIZE) * (IMG_SIZE-PATCH_SIZE);
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat::zeros(size_minus_patch*num_samples, rcount, CV_8UC1);
@@ -95,6 +95,11 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
 }
 
 int main(int argc, char* argv[]) {
+    if(argc<2) {
+        cout << argv[0] << " <training.bin>" << endl;
+        return 0;
+    }
+
     const int rcount = PATCH_SIZE * PATCH_SIZE * 3;
     cv::Mat data = cv::Mat(rcount, SAMPLES, CV_32FC1);
     //cv::Mat zca_u = cv::Mat(rcount, rcount, CV_32FC1);
@@ -103,7 +108,7 @@ int main(int argc, char* argv[]) {
 
     // Reading this from a file takes longer than executing this.
     printf("Memory usage initially: %d KB\n", getMemValue());
-    cv::Mat patches = load_data("../data/data_batch_1.bin", images);
+    cv::Mat patches = load_data(argv[1], images);
     printf("Number of images loaded = %ld\n", (long)images.size());
     printf("Memory usage after loading images: %d KB\n", getMemValue());
 
@@ -132,13 +137,13 @@ int main(int argc, char* argv[]) {
     fs_whitener << "whitener" << whitener;
     fs_whitener.release();
 
-    for(int i=0;i<images.size();i++) {
+    /*for(int i=0;i<images.size();i++) {
         cv::Mat visual_normalized = visualize_patches_std(images[i], patches_std.rowRange(676*i, (i+1)*676));
         cv::Mat visual_whitened = visualize_patches_zca(images[i], patches_whitened.rowRange(676*i, (i+1)*676));
         cv::imshow("Visualizing patches - normalized", visual_normalized);
         cv::imshow("Visualizing patches - whitened", visual_whitened);
         cv::waitKey(0);
-    }
+    }*/
 
     cout << "Starting kmeans on the whitened data" << endl;
     DECLARE_TIMING(kmeans_timer);
