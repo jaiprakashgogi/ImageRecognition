@@ -11,3 +11,6 @@ centroids:
 tools:
 	g++ visualize_centroids.cpp $(EXTRAS) $(LIBRARIES) $(FLAGS) -o v_centroids
 
+train:
+	./learn_centroids ../data/small_data_batch_all.bin > ../../logs/run_centroids.log
+	./learn_neural whitening.yaml centroids.yaml ../data/small_data_batch_a_train.bin > ../../logs/run_neural.log

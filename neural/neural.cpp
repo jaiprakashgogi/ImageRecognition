@@ -91,8 +91,8 @@ training_t load_data_neural(char* filename, bool generate_flips, cv::Mat mean, c
         return training_t();
     }
 
-    //const int num_samples = size / (NUM_BYTES_PER_IMG + 1);
-    int num_samples = 100;
+    int num_samples = size / (NUM_BYTES_PER_IMG + 1);
+    //int num_samples = 100;
     int num_samples_original = num_samples;
 
     // We'll be generating twice the number of samples
@@ -163,6 +163,7 @@ training_t load_data_neural(char* filename, bool generate_flips, cv::Mat mean, c
         data.row(i) = extract_features(images[i], mean, whitener, centroids);
     }
 
+    ret.data = data.clone();
     return ret;
 }
 
@@ -187,4 +188,9 @@ int main(int argc, char* argv[]) {
     fs2.release();
 
     training_t tdata = load_data_neural(argv[3], true, mean, whitener, centroids);
+
+    cv::FileStorage fs3("./features.yaml", cv::FileStorage::WRITE);
+    fs3 << "data" << tdata.data;
+    fs3 << "labels" << tdata.labels;
+    fs3.release();
 }
