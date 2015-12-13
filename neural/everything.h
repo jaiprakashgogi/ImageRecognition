@@ -41,6 +41,11 @@ cv::Mat shuffle_rows(const cv::Mat &matrix);
 bool file_exists (const std::string& name);
 cv::Mat feature_mean(cv::Mat);
 
+// Preprocessing.cpp
+cv::Mat normalize(cv::Mat, float);
+cv::Mat extract_patches(cv::Mat img, int patch_size);
+cv::Mat zca_white(cv::Mat data, cv::Mat mean, cv::Mat whitener);
+
 // visualize.cpp
 cv::Mat visualize_patches(cv::Mat, cv::Mat);
 cv::Mat visualize_patches_std(cv::Mat, cv::Mat);
