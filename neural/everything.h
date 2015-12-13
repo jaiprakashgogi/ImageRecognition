@@ -45,3 +45,4 @@ cv::Mat feature_mean(cv::Mat);
 cv::Mat visualize_patches(cv::Mat, cv::Mat);
 cv::Mat visualize_patches_std(cv::Mat, cv::Mat);
 cv::Mat visualize_patches_zca(cv::Mat, cv::Mat);
+cv::Mat visualize_kmeans_centroids(cv::Mat);
