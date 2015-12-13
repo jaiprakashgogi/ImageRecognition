@@ -6,10 +6,10 @@ cv::Mat zca_white(cv::Mat data) {
     printf("Starting caluculation\n");
     cv::Mat avg = feature_mean(data);
 
-    cv::Mat ret = data.clone();
 
     const int num_vectors = data.rows;
     const int feature_size = data.cols;
+    cv::Mat ret = data.clone();
 
     for(int i=0;i<num_vectors;i++) {
         ret.row(i) -= avg;
@@ -17,13 +17,37 @@ cv::Mat zca_white(cv::Mat data) {
 
     cv::Mat tr_data;
     cv::transpose(data, tr_data);
-    cv::Mat sigma = (data * tr_data) / feature_size;
+    cv::Mat sigma = (tr_data * data) / feature_size;
     cv::SVD svd(sigma, cv::SVD::FULL_UV);
     
     cv::Mat U, Vt, S;
     svd.compute(sigma, S, U, Vt);
+    S = cv::Mat::diag(S);
+    
+    cout << "Size of S = " << S.size() << endl;
+
+    const float epsilon = 0.1f;
+    cv::Mat t3_temp = S + cv::Mat::eye(S.rows, S.cols, CV_32FC1) * epsilon;
+    cv::Mat t3_temp2;
+    cv::invert(t3_temp, t3_temp2);
+    printf("Got till here\n");
+    cv::Mat t3;
+    cv::sqrt(t3_temp2, t3);
+
+    cv::Mat t4;
+    cv::transpose(U, t4);
+
+    const float t1 = sqrtf(num_vectors)-1;
+    cv::Mat whitening_transform;
+    whitening_transform = t1 * U * t3 * t4;
+
+    ret = ret * whitening_transform;
+
+
+    //whMat = sqrt(size(X,1)-1) * V * sqrtm(inv(D + eye(size(D))*epsilon)) * V';
 
     printf("Done caluculation\n");
+    return ret;
     
     /*MatrixXd avg = x.rowwise().mean();
     x = x - avg.replicate(1,x.cols());
@@ -229,7 +253,7 @@ cv::Mat load_data(char* filename, vector<cv::Mat> &images) {
         scratch_channel[1] = cv::Mat(IMG_SIZE, IMG_SIZE, CV_8UC1, img_data+1024);
         scratch_channel[2] = cv::Mat(IMG_SIZE, IMG_SIZE, CV_8UC1, img_data+2048);
         cv::merge(scratch_channel, 3, scratch);
-        images.push_back(scratch);
+        images.push_back(scratch.clone());
 
         // Calculate the individual patches
         int start_idx = data_idx;
@@ -295,10 +319,12 @@ int main(int argc, char* argv[]) {
     printf("Memory usage after zca learning: %d KB\n", getMemValue());
 
     printf("Size of zca_u = %d*%d\n", zca_u.rows, zca_u.cols);
-    cv::Mat patches_whitened = zca_white(patches_std);
-    cv::Mat visual_whitened = visualize_patches_zca(images[0], patches_whitened.rowRange(0, 676));
-    cv::imshow("Visualizing patches - whitened", visual_whitened);
-    cv::waitKey(0);
+    for(int i=0;i<images.size();i++) {
+        cv::Mat patches_whitened = zca_white(patches_std);
+        cv::Mat visual_whitened = visualize_patches_zca(images[i], patches_whitened.rowRange(676*i, (i+1)*676));
+        cv::imshow("Visualizing patches - whitened", visual_whitened);
+        cv::waitKey(0);
+    }
 
     printf("Number of rows = %d\n", patches.rows);
     printf("Memory usage after whitening: %d KB\n", getMemValue());
