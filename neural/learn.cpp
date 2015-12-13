@@ -2,10 +2,11 @@
 
 using namespace std;
 
-cv::Mat zca_white(cv::Mat data) {
+cv::Mat zca_white(cv::Mat data, cv::Mat mean, cv::Mat whitener) {
     printf("Starting caluculation\n");
     cv::Mat avg = feature_mean(data);
 
+    avg.copyTo(mean);
 
     const int num_vectors = data.rows;
     const int feature_size = data.cols;
@@ -42,6 +43,7 @@ cv::Mat zca_white(cv::Mat data) {
     whitening_transform = t1 * U * t3 * t4;
 
     ret = ret * whitening_transform;
+    whitening_transform.copyTo(whitener);
 
 
     //whMat = sqrt(size(X,1)-1) * V * sqrtm(inv(D + eye(size(D))*epsilon)) * V';
@@ -316,11 +318,22 @@ int main(int argc, char* argv[]) {
     //zca_learn(&zca_m, 0, &zca_u, patches, 0.1f);
     //cout << zca_m << endl;
     //printf("Size of zca_u = %d*%d\n", zca_u.rows, zca_u.cols);
-    cv::Mat patches_whitened = zca_white(patches_std);
+
+    cv::Mat mean, whitener;
+    mean = cv::Mat::zeros(1, PATCH_SIZE * PATCH_SIZE * 3, CV_32FC1);
+    whitener = cv::Mat::zeros(PATCH_SIZE*PATCH_SIZE*3, PATCH_SIZE*PATCH_SIZE*3, CV_32FC1);
+    cv::Mat patches_whitened = zca_white(patches_std, mean, whitener);
     printf("Memory usage after zca learning: %d KB\n", getMemValue());
 
+    cv::FileStorage fs_whitener("./whitener.yaml", cv::FileStorage::WRITE);
+    fs_whitener << "mean" << mean;
+    fs_whitener << "whitener" << whitener;
+    fs_whitener.release();
+
     /*for(int i=0;i<images.size();i++) {
+        cv::Mat visual_normalized = visualize_patches_std(images[i], patches_std.rowRange(676*i, (i+1)*676));
         cv::Mat visual_whitened = visualize_patches_zca(images[i], patches_whitened.rowRange(676*i, (i+1)*676));
+        cv::imshow("Visualizing patches - normalized", visual_normalized);
         cv::imshow("Visualizing patches - whitened", visual_whitened);
         cv::waitKey(0);
     }*/
