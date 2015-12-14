@@ -25,7 +25,11 @@
 
 ////////////////////////////////////////////////////////
 // Structs
-
+struct training_t {
+    cv::Mat data;
+    std::vector<uchar> labels;
+    unsigned int num_samples;
+};
 
 ////////////////////////////////////////////////////////
 // Function prototypes
@@ -40,6 +44,11 @@ int getMemValue();
 cv::Mat shuffle_rows(const cv::Mat &matrix);
 bool file_exists (const std::string& name);
 cv::Mat feature_mean(cv::Mat);
+
+// Preprocessing.cpp
+cv::Mat normalize(cv::Mat, float);
+cv::Mat extract_patches(cv::Mat img, int patch_size);
+cv::Mat zca_white(cv::Mat data, cv::Mat mean, cv::Mat whitener);
 
 // visualize.cpp
 cv::Mat visualize_patches(cv::Mat, cv::Mat);
