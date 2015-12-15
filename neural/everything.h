@@ -31,6 +31,18 @@ struct training_t {
     unsigned int num_samples;
 };
 
+struct mlp_t {
+    int num_input;
+    int num_hidden;
+    int num_output;
+    float dropout;
+    float noise;
+    float *w_input;
+    float *w_hidden;
+    float *bias_input;
+    float *bias_hidden;
+};
+
 ////////////////////////////////////////////////////////
 // Function prototypes
 
@@ -55,3 +67,10 @@ cv::Mat visualize_patches(cv::Mat, cv::Mat);
 cv::Mat visualize_patches_std(cv::Mat, cv::Mat);
 cv::Mat visualize_patches_zca(cv::Mat, cv::Mat);
 cv::Mat visualize_kmeans_centroids(cv::Mat);
+
+// mlp.cpp
+mlp_t* mlp_create(int, int, int);
+void mlp_initialize(mlp_t*, cv::Mat);
+void mlp_dropout(mlp_t* mlp, float dropout);
+void mlp_noise(mlp_t* mlp, float noise);
+void mlp_train(mlp_t*, cv::Mat, std::vector<uchar>, float, float, int, int, int);

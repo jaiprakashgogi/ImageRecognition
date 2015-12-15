@@ -19,3 +19,8 @@ An implementation of a neural network from scratch to classify the CIFAR-10 data
 %> ./classify network.yaml <images>
 # Prints out the result
 ```
+
+Installing `mkoctfile`:
+```
+sudo apt-get install liboctave-dev
+```

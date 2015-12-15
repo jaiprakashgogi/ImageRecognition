@@ -1,3 +1,5 @@
+// Hyperparameters for the training model
+
 #define CENTROIDS 4000
 #define PATCH_SIZE 6
 #define IMG_SIZE 32
@@ -7,6 +9,8 @@
 
 #define NUM_CLASSES 10
 #define NUM_HIDDEN 512
+
+#define USE_TRIANGLE_DISTANCE 0
 
 #define _USE_OPENMP
 

@@ -21,13 +21,13 @@ cv::Mat extract_features(cv::Mat img, cv::Mat mean, cv::Mat whitener, cv::Mat ce
 #pragma omp parallel for
 #endif
     for(int i=0;i<num_patches;i++) {
-        const int y = i / (IMG_SIZE-PATCH_SIZE);
-        const int x = i % (IMG_SIZE-PATCH_SIZE);
+        const int y = i / (IMG_SIZE-PATCH_SIZE+1);
+        const int x = i % (IMG_SIZE-PATCH_SIZE+1);
 
         int pool_index;
         const int r = (int)sqrtf(POOL_GRID);
-        int y_idx = (y / ((IMG_SIZE-PATCH_SIZE) / r));
-        int x_idx = (x / ((IMG_SIZE-PATCH_SIZE) / r));
+        int y_idx = (y / ((IMG_SIZE-PATCH_SIZE+1) / r));
+        int x_idx = (x / ((IMG_SIZE-PATCH_SIZE+1) / r));
 
         // Did we go beyong the image boundary?
         if (x_idx >= r) {
@@ -41,31 +41,40 @@ cv::Mat extract_features(cv::Mat img, cv::Mat mean, cv::Mat whitener, cv::Mat ce
         if (pool_index >= POOL_GRID) {
             pool_index = POOL_GRID - 1;
         }
-        
-        // TODO - implement triangle distance measure??
-        // Using nearest neighbour for now
 
         cv::Mat current = patches_zca.row(i);
         cv::Mat distances = cv::Mat::zeros(1, CENTROIDS, CV_32FC1);
-
         int l = 0;
         for(l=0;l<CENTROIDS;l++) {
-            cv::Scalar d = cv::norm(centroids.row(i) - current);
+            cv::Scalar d = cv::norm(centroids.row(l) - current);
             distances.col(l) = d[0];
         }
+
+#if USE_TRIANGLE_DISTANCE
+        cv::Scalar t = cv::sum(distances);
+        float mean = (float)(t[0])/CENTROIDS;
+        cv::Mat transformed = mean - distances;
+        for(l=0;l<CENTROIDS;l++) {
+            float v = transformed.at<float>(1, l);
+            if(v<=0.0f)
+                continue;
+
+            pool.at<float>(l, pool_index) = pool.at<float>(l, pool_index) + v;
+        }
+#else   // Use nearest neighbour
+
 
         double minval = 0;
         cv::Point minloc;
         cv::minMaxLoc(distances, &minval, NULL, &minloc);
         const unsigned int idx = (unsigned int)minloc.x;
 
-        distances.release();
-        current.release();
-
         pool.at<float>(idx, pool_index) = 1.0f + pool.at<float>(idx, pool_index);
+#endif
+        distances.release();
     }
-    
-    return pool.reshape(1, POOLED_FEATURE_SIZE).clone();
+
+    return pool.reshape(1, 1).clone();
 }
 
 training_t load_data_neural(char* filename, bool generate_flips, cv::Mat mean, cv::Mat whitener, cv::Mat centroids) {
@@ -92,7 +101,7 @@ training_t load_data_neural(char* filename, bool generate_flips, cv::Mat mean, c
     }
 
     int num_samples = size / (NUM_BYTES_PER_IMG + 1);
-    //int num_samples = 100;
+    //int num_samples = 5;
     int num_samples_original = num_samples;
 
     // We'll be generating twice the number of samples
@@ -113,11 +122,14 @@ training_t load_data_neural(char* filename, bool generate_flips, cv::Mat mean, c
     cv::Mat *scratch_channel = new cv::Mat[3]();
     cv::Mat scratch, scratch2;
 
+    uchar label;
+    uchar *img_data = new uchar[NUM_BYTES_PER_IMG];
+
     vector<cv::Mat> images;
     for(int i=0;i<num_samples_original;i++) {
-        printf("Loading image #%d\n", sample_count);
-        uchar label;
-        uchar *img_data = new uchar[NUM_BYTES_PER_IMG];
+        if(i%100==0) {
+            printf("Loading image #%d\n", sample_count);
+        }
 
         if(fread(&label, sizeof(uchar), 1, fp) != 1) {
             printf("Unable to read label for image %d\n", sample_count);
@@ -160,10 +172,12 @@ training_t load_data_neural(char* filename, bool generate_flips, cv::Mat mean, c
 #endif
     for(int i=0;i<num_samples;i++) {
         printf("Processing image #%d\n", i);
-        data.row(i) = extract_features(images[i], mean, whitener, centroids);
+        cv::Mat temp = extract_features(images[i], mean, whitener, centroids);
+        temp.copyTo(data.row(i));
     }
 
     ret.data = data.clone();
+    data.release();
     return ret;
 }
 
@@ -187,10 +201,42 @@ int main(int argc, char* argv[]) {
     fs2["centroids"] >> centroids;
     fs2.release();
 
-    training_t tdata = load_data_neural(argv[3], true, mean, whitener, centroids);
+    training_t tdata;
+    if(!file_exists("./features.yaml")) {
+        cout << "Starting loading training data for neural network" << endl;
+        tdata = load_data_neural(argv[3], true, mean, whitener, centroids);
 
-    cv::FileStorage fs3("./features.yaml", cv::FileStorage::WRITE);
-    fs3 << "data" << tdata.data;
-    fs3 << "labels" << tdata.labels;
-    fs3.release();
+        cv::FileStorage fs3("./features.yaml", cv::FileStorage::WRITE);
+        fs3 << "data" << tdata.data;
+        fs3 << "labels" << tdata.labels;
+        fs3.release();
+    } else {
+        printf("Loading features\n");
+        cv::FileStorage fs3("./features.yaml", cv::FileStorage::READ);
+        fs3["data"] >> tdata.data;
+        fs3["labels"] >> tdata.labels;
+        fs3.release();
+    }
+
+    printf("Initializing neural network\n");
+    mlp_t* mlp = mlp_create(POOLED_FEATURE_SIZE, NUM_HIDDEN, NUM_CLASSES);
+    mlp_initialize(mlp, tdata.data);
+    mlp_dropout(mlp, 0.5f);
+    mlp_noise(mlp, 0.2f);
+
+    float ir = 0.0002f;
+    float hr = 0.0002f;
+
+    for (int i = 0;i<5;i++) {
+        char file[256];
+        
+        if (i >= 4) {
+            ir = 0.00005f;
+            hr = 0.00005f;
+        }
+
+        mlp_train(mlp, tdata.data, tdata.labels, ir, hr, i * 100, (1 + i) * 100, 500);
+        //nv_snprintf(file, sizeof(file), "epoch_%d.mlp", i);
+        //nv_save_mlp(file, mlp);
+    }
 }
