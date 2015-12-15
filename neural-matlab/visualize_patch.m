@@ -10,6 +10,6 @@ for i = 1:size(patch,1)
 end
 figure, imagesc(img);
 im = reshape(data, [32 32 3]);
-figure, imshow(im);
+figure, imagesc(im);
 end
 

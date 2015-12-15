@@ -1,29 +1,48 @@
-addpath('../vlfeat-0.9.20/toolbox/');
-run vl_setup.m;
-patch = [];
-Data = [];
-for j = 1:5
+load('jp_white.mat');
+load('mat.centroids.mat');
+addpath('../svm');
+%% patch = [];
+X = []; Y = [];
+for j = 1:1
     ws = sprintf('../data/small_data_batch_%d.mat', j);
     load(ws);
     for i = 1:size(data,1)
         tic
         i
         pat = extract_patch(data(i,:));
+        pat = pat*whitener';
         toc
-        patch = cat(1,patch, pat);
+        %patch = cat(1,patch, pat);
         %X = cat(1, X, x);
-        Data = cat(1, Data, data(i,:));
+        dist = pdist2(pat,centroids);
+        [~, id] = min(dist');
+        X = cat(1,X,id);
+        Y = cat(1, Y, labels);
     end
-    %[Xwh, mu, invMat, whMat] = whiten(patch);
-    % visualize_patch(patch, 6)
-    % visualize_patch(data(i,:),patch(1+i*27*27:(i+1)*27*27,:), 6)
 end
 
-save('patch_1_5.mat', 'patch', 'Data');
+C = 0.1;
+[ Model ] = train_svm_batch( X, Y, C);
+save('Model.mat', 'Model');
+%%
+load('../data/small_data_batch_1.mat');
+load('Model.mat');  
+%classify_svm_batch(Model, data)
 
-patch(find(isinf(patch))) = 0;
-patch(find(isnan(patch))) = 0;
-[Xwh, mu, invMat, whMat] = whiten(patch);
+Acc = [];
+for i = 1:5
+ws = sprintf('../data/small_data_batch_%d.mat', i);
+load(ws);
+[Y] = classify_svm_batch(Model, data);
 
-% visualize_patch(data(i,:),patch(1+i*27*27:(i+1)*27*27,:), 6)
-% visualize_patch(data(i,:),Xwh(1+i*27*27:(i+1)*27*27,:), 6)
+% confusion matrix
+uniq = unique(labels);
+C = zeros(length(uniq));
+for i = 1:size(Y,1)
+    C(Y(i) + 1, labels(i) +1) = C(Y(i) +1, labels(i)+1) + 1;
+end
+
+acc = trace(C)/sum(sum(C))
+Acc = cat(1, Acc, acc);
+end
+Acc
