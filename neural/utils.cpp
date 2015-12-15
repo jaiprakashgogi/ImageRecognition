@@ -33,11 +33,11 @@ cv::Mat shuffle_rows(const cv::Mat &matrix) {
   for (int cont = 0; cont < matrix.rows; cont++)
     seeds.push_back(cont);
 
-  cv::randShuffle(seeds);
+  random_shuffle(seeds.begin(), seeds.end());
 
   cv::Mat output;
   for (int cont = 0; cont < matrix.rows; cont++)
-    output.push_back(matrix.row(seeds[cont]));
+    output.push_back(matrix.row(seeds[cont]).clone());
 
   return output;
 }
