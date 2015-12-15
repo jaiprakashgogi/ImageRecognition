@@ -61,3 +61,42 @@ cv::Mat feature_mean(cv::Mat data) {
 
     return ret;
 }
+
+void writeMatFile(const char *fileName, cv::Mat mat, const char* name) {
+    FILE *file = fopen( fileName, "wb" );
+
+    // If mat is ND we write multiple copies with _n suffixes
+    int depth = mat.channels();
+    for( int d=0; d<depth; d++) {
+
+        // Assumption that we are always dealing with double precision
+        uint32_t MOPT = 0000;
+        fwrite(&MOPT, 1, sizeof( uint32_t), file);
+        uint32_t    mrows = mat.rows;
+        uint32_t    ncols = mat.cols;
+        uint32_t    imagef = 0;
+
+        char nameBuff[ strlen( name ) + 10];
+        strcpy(nameBuff, name);
+        if( depth>1) {
+            char suffix[5];
+            sprintf(suffix, "_L%d", d+1);
+            strcat(nameBuff, suffix);
+        }
+
+        uint32_t    nameLength = strlen( nameBuff ) + 1;
+        fwrite( &mrows, 1, sizeof( uint32_t), file);
+        fwrite( &ncols, 1, sizeof( uint32_t), file);
+        fwrite( &imagef, 1, sizeof( uint32_t), file);
+        fwrite( &nameLength, 1, sizeof( uint32_t), file);
+        fwrite( nameBuff, nameLength, 1, file );
+
+        for( int col = 0; col<ncols; col++ ) {
+            for( int row=0; row<mrows; row++ ) {
+                cv::Scalar sc = mat.at<float>(row, col); //cvGet2D(mat, row, col);
+                fwrite(&(sc.val[d]), 1, sizeof( double ), file);
+            }
+        }
+    }
+    fclose( file );
+}

@@ -56,6 +56,7 @@ int getMemValue();
 cv::Mat shuffle_rows(const cv::Mat &matrix);
 bool file_exists (const std::string& name);
 cv::Mat feature_mean(cv::Mat);
+void writeMatFile(const char *fileName, cv::Mat mat, const char* name);
 
 // Preprocessing.cpp
 cv::Mat normalize(cv::Mat, float);
