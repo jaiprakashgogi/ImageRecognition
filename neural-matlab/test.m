@@ -1,39 +1,32 @@
-load('jp_white.mat');
-load('mat.centroids.mat');
 addpath('../svm');
-%% patch = [];
+%patch = [];
 X = []; Y = [];
-for j = 1:1
+for j = 1:5
     ws = sprintf('../data/small_data_batch_%d.mat', j);
     load(ws);
     for i = 1:size(data,1)
-        tic
         i
-        pat = extract_patch(data(i,:));
-        pat = pat*whitener';
-        toc
-        %patch = cat(1,patch, pat);
-        %X = cat(1, X, x);
-        dist = pdist2(pat,centroids);
-        [~, id] = min(dist');
-        X = cat(1,X,id);
-        Y = cat(1, Y, labels);
+        pat = preporcess_normalize_whiten(data(i,:));
+        X = cat(1,X,pat);
     end
+    Y = cat(1, Y, labels);
 end
-
+%%
 C = 0.1;
 [ Model ] = train_svm_batch( X, Y, C);
-save('Model.mat', 'Model');
+save('Model3.mat', 'Model');
+save('XY.mat', 'X', 'Y');
 %%
-load('../data/small_data_batch_1.mat');
-load('Model.mat');  
-%classify_svm_batch(Model, data)
+clear all;
+close all;
+clc;
+load('Model3.mat');  
 
 Acc = [];
 for i = 1:5
 ws = sprintf('../data/small_data_batch_%d.mat', i);
 load(ws);
-[Y] = classify_svm_batch(Model, data);
+[Y] = classify3(Model, data);
 
 % confusion matrix
 uniq = unique(labels);
