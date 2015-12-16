@@ -7,6 +7,7 @@ for j = 1:5
     ws = sprintf('../data/small_data_batch_%d.mat', j);
     load(ws);
     for i = 1:size(data,1)
+        i
         x = vector2im(data(i,:));
         X = cat(1, X, x);
     end
@@ -17,7 +18,7 @@ C = 0.1;
 [ Model ] = train_svm_batch( X, Y, C);
 save('Model.mat', 'Model');
 %%
-load('../data/small_data_batch_1.mat');
+%load('../data/small_data_batch_1.mat');
 load('Model.mat');  
 %classify_svm_batch(Model, data)
 

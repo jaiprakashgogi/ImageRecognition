@@ -20,13 +20,14 @@ save('XY.mat', 'X', 'Y');
 clear all;
 close all;
 clc;
-load('Model3.mat');  
+load('Model3.mat');
+load('XY.mat');
 
 Acc = [];
 for i = 1:5
 ws = sprintf('../data/small_data_batch_%d.mat', i);
 load(ws);
-[Y] = classify3(Model, data);
+[Y] = classify3(Model, dXata);
 
 % confusion matrix
 uniq = unique(labels);

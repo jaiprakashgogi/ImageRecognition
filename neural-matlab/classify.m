@@ -1,10 +1,10 @@
-function [Y] = classify3(Model, data)
+function [Y] = classify(Model, data)
 X = [];
 for i = 1:size(data,1)
 	x = preporcess_normalize_whiten(data(i,:));
 	X = cat(1, X, x);
 end
-
+%X = data;
 nClass = length(Model);
 nSubClass = length(Model{1});
 
