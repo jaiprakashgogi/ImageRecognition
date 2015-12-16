@@ -1,10 +1,10 @@
-addpath('../vlfeat-0.9.20/toolbox/');
+addpath('../../vlfeat-0.9.20/toolbox/');
 run vl_setup.m;
 cellSize = 8 ;
 %
 X = []; Y = [];
 for j = 1:5
-    ws = sprintf('../data/small_data_batch_%d.mat', j);
+    ws = sprintf('../../data/small_data_batch_%d.mat', j);
     load(ws);
     for i = 1:size(data,1)
         i
