@@ -29,7 +29,7 @@ load(ws);
 [Y] = classify_svm_batch(Model, data);
 
 % confusion matrix
-uniq = unique(labels);
+uniq =  (labels);
 C = zeros(length(uniq));
 for i = 1:size(Y,1)
     C(Y(i) + 1, labels(i) +1) = C(Y(i) +1, labels(i)+1) + 1;
