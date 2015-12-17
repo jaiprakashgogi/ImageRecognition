@@ -9,6 +9,7 @@ for i = training_set
     combined_label((i-1)*1000+1:i*1000, :) = labels(:, :);
 end
 
+%%
 % Compute the histograms
 histogram(combined_label, 10);
 
