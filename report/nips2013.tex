@@ -70,12 +70,13 @@ Image classification based on image features is a challenging job in Machine Lea
 \section{Introduction}
 Image classification is an interesting research domain in both computer vision and machine learning. The state-of-the-art image classifiers have an accuracy upto 94\%, which are claimed to be more than humans. To achieve such a remarkable accuracy, one needs both intellectual effort as well as engineering effort. In this project, we try to address both these aspects by implementing the state-of-the art classifiers and fine-tuning them to increase the accuracy.
 
-Machine learning techniques can be used for the task of classification. the basic classifiers are expected to give descent performance when compared to a dummy/random classifier. The more advanced classifiers would need more training and sophisticated mechanism to understand and tune the parameters of the model. More training could sometimes leads to over-fitting the training data, resulting in false predictions during test time. Hence, a trade-off is made between the achieving accuracy and fitting the training data. Yet more complicated non-linear classifiers needs much more training time. In this project, we explore some of the basic classifiers followed by few advanced classifiers like support vector machines (SVM).
+Machine learning techniques can be used for the task of classification. the basic classifiers are expected to give descent performance when compared to a dummy/random classifier. The more advanced classifiers would need more training and sophisticated mechanism to understand and tune the parameters of the model. More training could sometimes leads to over-fitting the training data, resulting in false predictions during test time. Hence, a trade-off is made between the achieving accuracy and fitting the training data. Yet more complicated non-linear classifiers needs much more training time. In this project, we explore some of the basic classifiers followed by few advanced classifiers like support vector machines (SVM) and neural networks.
 
-The report is structured as follows. The first section talks about the initial data analysis done on the provided dataset. The next section talks about implementation using the basic classifiers like k-means and k-nearest neighbours. Finally, support vector machines are discussed in details followed by results.
+The report is structured as follows. The first section talks about the initial data analysis done on the provided dataset. The next section talks about implementation using the basic classifiers like k-means and k-nearest neighbours. The following section contains the the details regarding neural networks. Finally, support vector machines are discussed in details followed by results.
 
 \subsection{Related work}
-The best results on CIFAR dataset is given by deep neural networks. The list of the latest are summarized in \url{http://zybler.blogspot.com/2011/02/table-of-results-for-cifar-10-dataset.html}. From the trends of the accuracy we can see that, the basic classifiers can achieve an accuracy of 72.28\%. To achieve better results, we would need to implement one of the variations of deep network.
+%The best results on CIFAR dataset is given by deep neural networks. The list of the latest are summarized in \url{http://zybler.blogspot.com/2011/02/table-of-results-for-cifar-10-dataset.html}. From the trends of the accuracy we can see that, the basic classifiers can achieve an accuracy of 72.28\%. To achieve better results, we would need to implement one of the variations of deep network.
+Most of the state-of-the art classification techniques use the deep neural network for classification. The unsupervised pre-processing has a significant effect on the classification accuracy. Coates et. al. \cite{andrew} has shown that we can boost normal classifiers and can boost the accuracy from 56\% to 79\%. This is combination of un-supervised and supervised learning techniques. First, we pre-process the data to be on the same scale, this is done by using contrast normalization and whitening. Then meaningful words are extracted using the k-means clustering. This pre-processing is done by using un-supervised learning. The words are then extracted from each image to represent each image by the vocabulary we have learnt from the un-supervised learning techniques. This is then passed through the supervised learning (Support vector machines) for classification.
 
 \section{Exploratory data analysis}
     Before starting with the machine learning techniques, we tried to understand the dataset we were provided. We looked that the \textbf{distribution of training labels} provided to us. This was to ensure the training samples are not skewed towards a certain label. We found that `airplane` class had the least number of training samples (about 470) and `frog` class had the maximum (about 520). The difference is minimal and should not affect training.
@@ -286,13 +287,14 @@ Also, the margin in SVM plays an important role to decide the accuracy of the cl
 \subsection{SVM}
 \begin{table}[t]
     \begin{center}
-        \begin{tabular}{ll}
-        \multicolumn{1}{c}{\bf SVM technique}  &\multicolumn{1}{c}{\bf Accuracy}
+        \begin{tabular}{llll}
+        \multicolumn{1}{c}{\bf SVM technique}  & \multicolumn{1}{c}{\bf HOG cellsize} & \multicolumn{1}{c}{\bf C} & \multicolumn{1}{c}{\bf Accuracy}
         \\ \hline \\
-        Normal SVM         & 44.3 \% \\
-        SVM with data Normalization             & 50.8\% \\
-        SVM with data and contrast normalization &51.9 \% \\
-        Voted SVM	& 54.3\% \\
+        Normal SVM &8 & 0.1        & 44.3 \% \\
+        SVM with data Normalization   &8 & 0.1          & 50.8\% \\
+        SVM with data and contrast normalization &8 & 0.1&51.9 \% \\
+        Voted SVM	&4 & 0.1 & 52.2\% \\
+        Voted SVM	&8 & 0.1 & 54.3\% \\
         \end{tabular}
     \end{center}
     \caption{Results of classification with SVMs}
@@ -383,8 +385,8 @@ Also, the margin in SVM plays an important role to decide the accuracy of the cl
     % subsection Results (end)
 
 
-\section{Future work}
-    Until now, we have achieved a maximum accuracy of 55\%. We have used simple techniques like k-means, k-nearest and more sophisticated techniques like SVM. Our next trial will be with a discriminative sum-product networks. The paper claims to achieve a high accuracy using a network approach and using gradient descent.
+\section{Conclusion}
+The basic classifiers like k-nearest neighbours works decently with about 50\% accuracy of classification. The more sophisticated classifiers needs a lot of tuning for the classifier to a good classification. Neural network was one of the classifiers that was explored in this project and we found that it takes a long time to train and the classification is not as expected. The support vector machines gives a better performance with some tuning. The accuracy is further increased by applying some-pre processing on the images.
 
 {\small{
 \begin{thebibliography}{11}
