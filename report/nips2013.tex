@@ -86,22 +86,22 @@ The best results on CIFAR dataset is given by deep neural networks. The list of 
 
     \begin{figure}
         \centering
-        \begin{subfigure}{.2\linewidth}
+        \begin{subfigure}{.24\linewidth}
             \centering
             \includegraphics[width=\linewidth]{images/label-distribution.png}
         \caption{}
         \end{subfigure}
-        \begin{subfigure}{.2\linewidth}
+        \begin{subfigure}{.24\linewidth}
             \centering
             \includegraphics[width=\linewidth]{images/hist-overall.png}
         \caption{}
         \end{subfigure}
-        \begin{subfigure}{.2\linewidth}
+        \begin{subfigure}{.24\linewidth}
             \centering
             \includegraphics[width=\linewidth]{images/avg-img.png}
         \caption{}
         \end{subfigure}
-        \begin{subfigure}{.2\linewidth}
+        \begin{subfigure}{.24\linewidth}
             \centering
             \includegraphics[width=.75\linewidth]{images/knn-confusion.png}
             \caption{}
@@ -131,7 +131,7 @@ The best results on CIFAR dataset is given by deep neural networks. The list of 
 %    \end{figure}
     
 
-\section{Classification with K-means and K-Nearest Neighbours}
+\section{Classification using machine learning techniques}
     The very first approach we tried was using the simple k-means and k-nearest neighbours approaches. These are simple to implement and help understand the dataset provided to use better. Details of problems with these techniques are provided in detail below.
 \subsection{K-Means} % (fold)
 The first attempt was to use the raw image data and K-means clustering algorithm to find clusters in the pixel RGB values. This approach took a long to train and produced bad results. With a constant classifier (one that always returns a particular class), we would have about 10\% accuracy. We achieved about 15.3\% accuracy with the naive K-means classifier. %This improvement is very small compared to the effort required for the code.\\
@@ -166,8 +166,67 @@ We used the K-nearest neighbours on three different feature spaces. The first wa
         \end{table}
 
     % subsection Results (end)
+    
+\subsection{Neural network}
+\label{sub:neural}
+    Something something
+    \begin{figure}
+        \centering
+        \begin{subfigure}{.35\linewidth}
+            \centering
+            \includegraphics[width=.5\linewidth]{images/neural-architecture.png}
+            \caption{}
+        \end{subfigure}
+        \begin{subfigure}{.43\linewidth}
+            \centering
+            \includegraphics[width=.75\linewidth]{images/normalize-zca.png}
+        \caption{}
+        \end{subfigure}
+        \begin{subfigure}{.2\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{images/patch-clusters-few.png}
+        \caption{}
+        \end{subfigure}
+        \caption{(a) Architecture of the neural network used in our approach (b) Normalizing and ZCA on the individual patches (c) A subset of the learned patches after kmeans clustering}
+    \end{figure}
+ 
 
-\section{Support vector machines}
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsubsection{Multi-layer Perceptron} % (fold)
+    \label{sub:Multi-layer Perceptron}
+        For our test, we use a simple multi-layer perceptron with backpropagation for training. The neural network consists of three layers: an input layer consisting of 16000 neurons, a hidden layer consisting of 512 neurons and an output layer of 10 neurons. We use the sigmoid activation function for each neuron.
+
+        Experimentally, we found that feeding the pixel values of the image produces a low classification accuracy. When using HOG features, we found the accuracy dropped further. To get around this, we first pre-process each training image as described in the next section.
+    % subsection Multi-layer Perceptron (end)
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsubsection{Pre-processing} % (fold)
+    \label{sub:Pre-processing}
+        Directly feeding raw pixels into the neural network produces low accuracies (about 31\%). This is worse than the performance of some simpler machine learning techniques. We implemented the preprocessing steps mentioned in [5] to improve the performance of the neural network. 
+
+        The first step is to split a given 32x32x3 image into small patches. We extracted 6x6x3 patches from a given training image using a moving window. This produces 729 patches per image. This is applied to all training samples.
+
+        These patches are then normalized and whitened using the Mahalanobis transformation. Normalizing a patch $I_n$ is simply subtracting the mean $\mu(I)$ from the patch $I$ and dividing by the standard deviation $\sigma(I)$ using equation \ref{eqn:isigma}. This produces images with pixel values approximately in the range of -1 to +1.
+        
+%        \begin{align*}
+%            \textbf{I}_{n}(x, y) &= \frac{\textbf{I}(x, y) - \mu(\textbf{I})}{\sigma(\textbf{I})}\\
+%        \end{align*}
+
+        The Mahalanobis transformation [6] is used to transform the covariance of the input samples into an identity matrix. To calculate this, we need to calculate the eigenvalues and eigenvectors of the covariance matrix using SVD. We then compute the transformation \textbf{$W_{M}$} as shown below. Compared to principal component analysis, this transformation tries to rotate the input data as little as possible and is thus better suited for this application.
+
+        \begin{align*}
+            \textbf{C} &= \frac{\textbf{X}^{T}\textbf{X}}{n} & \text{(Where $X$ is the $n\times d$ feature vector)}\\
+            &= \textbf{EDE}^{T} & \text{(\textbf{E} is eigenvectors, \textbf{D} is eigenvalues as diagonal matrix)}\\
+            \textbf{W}_{M} &= \textbf{ED}^{-\frac{1}{2}}\textbf{E}^{T}\\
+        \end{align*}
+
+        We now use the normalized and whitened patches to learn features in the input images. The paper [5] mentions several techniques including auto-encoders, RBMs and GMMs. However, in our implementation, we use the mathematically simpler k-means clustering with K=4000. This produces the centroids of the most commonly appearing 6x6x3 patches in the input dataset. This step is equivalent to learning all the distinct edges in input samples.
+
+        We can now approximately reconstruct the source image in terms of learned centroids. This produces a 729*4000 feature vector. Each patch in the source image corresponds to exactly one learned centroid - thus the feature vector is sparse and contains at most 729 ones. Since this is a very big feature vector, we run it through pooling.
+
+        We pool the feature vector from a 32x32 grid into a 2x2 grid. The resulting feature vector is 4*4000 elements long. This is exactly the number of input neurons used by our neural network.
+
+\subsection{Support vector machines}
 \label{sec:svm}
 	Support vector machines (SVM) are linear classifiers which classify the given feature vectors into two classes. For training the SVM we need input features and the labels from the training set. The dataset contains 32x32x3 size images, which needs to be converted to a feature vector. In this paper we have used histogram of gradients (HOG) as the basic feature. The HOG features divides the image into small block and calculates the histograms of the gradients. The gradients contain information regarding the direction in which the intensity changes the maximum. The HOG feature descriptor quantizes the gradients into 9 directions and returns the histogram along those directions. HOG descriptors holds information regarding the shape of the objects.
 	
@@ -182,7 +241,7 @@ We used the K-nearest neighbours on three different feature spaces. The first wa
 In each class all the 9 classifiers vote whether the data belongs to that class or not. For example for class1, the SVMs corresponding to class1 vs class2, .... class10 vote if the class belong to class1 or not. We count the number of vote for class1. Similarly for class2 and so on. The final classification depends on the highest number of votes. The class which has most number of votes using the simple classifiers wins. This voted SVM technique is found very effective and the results have boosted in order of 7-10\%.
 
 In addition the range of image is 8-bit (0-255). This might not be a good option for SVMs, as the range of the data is more. In order for the SVMs to be a robust classification its is recommended that the input dataset varies in the range (-1,1). So the HOG features are normalized in this range. This improves the classification efficiency by 3-4\%.
-\subsection{Contrast Normalization}
+\subsubsection{Contrast Normalization}
 
 To further improve the classification, we have implemented contrast normalization. The images might have been taken in various lighting conditions. The day-light images will have different contrast than low-light images. The intensity of these two images would be different and so in-order to make the images robust to the lighting conditions, we subtract the mean of the intensity from every pixel. This would normalize the contrast among all the images. An example of the contrast normalization is shown in the Figure \ref{fig:contrast}. Contrast normalization inproves the accuracy by 1-2\%.
 
@@ -200,6 +259,7 @@ I_{mean}(x,y) = I(x,y) - \mu(I)
 
 \begin{equation}
 I_{\sigma}(x,y) = \frac{I(x,y) - \mu(I)}{\sigma(I)}
+\label{eqn:isigma}
 \end{equation}
 
 Also, the margin in SVM plays an important role to decide the accuracy of the classifier. This margin decides decides the extent of over-fitting in the model. A margin of $C=0.1$ yields optimum performance.
@@ -212,15 +272,33 @@ Also, the margin in SVM plays an important role to decide the accuracy of the cl
     Upon analysing the confusion matrix for K-Nearest neighbours (Figure 1 (d)), we found that the perfectly classified labels belonged to classes with several sharp and well defined edges - cars, airplanes, ships, trucks. The horse and frog classes seem to perform quite well too - however, the bird, cat, deer and dog classes are harder to classify.\\
 
         From this, we can infer why the classifier fails. At such low resolutions, the HOG features are unable to capture the distinctive features of these classes. Most of them seem to be mammals with 4 legs and thus the confusion. Using HOG with higher resolutions (with smaller cell sizes), we found that accuracy of the classifier decreased to below 50\% with no increase in accuracy on the problematic classes. The results of k-means and k-nearest neighbours are summarized in Table \ref{tab:knn}.
+        
+    \subsection{Neural network} % (fold)
+    \label{sub:Results}
+        We tried two different techniques with neural networks. In the first, we input raw pixels directly into the neural network. In this configuration, the neural network had 108, 512 and 10 neurons in the input, hidden and output layers respectively. Training this on the supplied dataset, we found that the average accuracy of the neural network was about 31\% with leave one out cross validation. This is worse than the accuracy obtained in previous sections.
+
+        The second approach was to pre-process input images and produce a 16000 long feature vector for each image. This produced an accuracy of about 51.2\% with leave one out cross validation. This is still lower than approaches described earlier.
+
+        We found that running the pre-processing steps on Autolab always timed out. Extracting patches and whitening them both take a large amount of time when using Octave. This combined with the large neural network always timed out when we submitted three classifiers at the same time.
+
+        To overcome this, we tried writing C++ functions for our technique using the Octave binary compiler (\texttt{mkoctfile}), however, neither Autolab nor Virtual Andrew seem to support it. Thus, we had to discard the neural network approach altogether and consider a computationally less expensive algorithm.
 
 \subsection{SVM}
-        The results obtained with the SVMs are summarized in the Table \ref{tab:svm}. From the table we can see the improvement in accuracy by implementation of the voted SVM. The accuracy is further improved by using contrast normalization and data normalization as discussed in section \ref{sec:svm}. 
-        The figure \ref{fig:svmconfusion} shows the effect of C in 2D data. From the graphs, we can conclude that, as the regularization parameter increases the margin decreases, this is because regularization parameter gives more weight to the error classification. So, as the boundary decreases, the region of confusion decreases. When regularization decreases  the SVM becomes more lenient and allows bigger region of confusion and hence would not result in proper classification.
-        The list of experiments done using SVM is as follows:
-\begin{itemize}
-\item \textbf{Effect of C:} A study on effect of the regularization is done as shown in figure \ref{fig:cvsaccuracy}. From experimentation, we found that $C=0.1$ gives the maximum accuracy.
-\item \textbf{Cell-size in HOG feature:} We tried the HoG features with different cell-size (2, 4, 8 respectively) and found that Cell-size 8 give best accuracy.
-\end{itemize}
+\begin{table}[t]
+    \begin{center}
+        \begin{tabular}{ll}
+        \multicolumn{1}{c}{\bf SVM technique}  &\multicolumn{1}{c}{\bf Accuracy}
+        \\ \hline \\
+        Normal SVM         & 44.3 \% \\
+        SVM with data Normalization             & 50.8\% \\
+        SVM with data and contrast normalization &51.9 \% \\
+        Voted SVM	& 54.3\% \\
+        \end{tabular}
+    \end{center}
+    \caption{Results of classification with SVMs}
+    \label{tab:svm}
+\end{table}
+
 
 
 \begin{figure}
@@ -278,145 +356,60 @@ Also, the margin in SVM plays an important role to decide the accuracy of the cl
 \begin{figure}
 \begin{subfigure}{0.33\textwidth}
 \centering
-\includegraphics[scale=0.3]{images/hog_original}
+\includegraphics[scale=0.25]{images/hog_original}
 \caption{Original Image}
 \end{subfigure}
 \begin{subfigure}{0.33\textwidth}
 \centering
-\includegraphics[scale=0.3]{images/hog_cellsize_4}
+\includegraphics[scale=0.25]{images/hog_cellsize_4}
 \caption{Hog features with cellsize 4}
 \end{subfigure}
 \begin{subfigure}{0.33\textwidth}
 \centering
-\includegraphics[scale=0.3]{images/hog_cellsize_8}
+\includegraphics[scale=0.25]{images/hog_cellsize_8}
 \caption{Hog features with cellsize 8}
 \end{subfigure}
 \caption{Hog feature extraction from the original image}
 \end{figure}
 
+
+        The results obtained with the SVMs are summarized in the Table \ref{tab:svm}. From the table we can see the improvement in accuracy by implementation of the voted SVM. The accuracy is further improved by using contrast normalization and data normalization as discussed in section \ref{sec:svm}. 
+        The figure \ref{fig:svmconfusion} shows the effect of C in 2D data. From the graphs, we can conclude that, as the regularization parameter increases the margin decreases, this is because regularization parameter gives more weight to the error classification. So, as the boundary decreases, the region of confusion decreases. When regularization decreases  the SVM becomes more lenient and allows bigger region of confusion and hence would not result in proper classification.
+        The list of experiments done using SVM is as follows:
+\begin{itemize}
+\item \textbf{Effect of C:} A study on effect of the regularization is done as shown in figure \ref{fig:cvsaccuracy}. From experimentation, we found that $C=0.1$ gives the maximum accuracy.
+\item \textbf{Cell-size in HOG feature:} We tried the HoG features with different cell-size (2, 4, 8 respectively) and found that Cell-size 8 give best accuracy.
+\end{itemize}
     % subsection Results (end)
 
-% FIGURE SAMPLE
-%\begin{figure}[h]
-%    \begin{center}
-%    %\framebox[4.0in]{$\;$}
-%    \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-%    \end{center}
-%    \caption{Sample figure caption.}
-%\end{figure}
-
-% TABLE SAMPLE
-\begin{table}[t]
-    \begin{center}
-        \begin{tabular}{ll}
-        \multicolumn{1}{c}{\bf SVM technique}  &\multicolumn{1}{c}{\bf Accuracy}
-        \\ \hline \\
-        Normal SVM         & 44.3 \% \\
-        SVM with data Normalization             & 50.8\% \\
-        SVM with data and contrast normalization &51.9 \% \\
-        Voted SVM	& 54.3\% \\
-        \end{tabular}
-    \end{center}
-    \caption{Results of classification with SVMs}
-    \label{tab:svm}
-\end{table}
-
-\section{Neural network}
-\label{sub:neural}
-    Something something
-    \begin{figure}
-        \centering
-        \begin{subfigure}{.3\linewidth}
-            \centering
-            \includegraphics[width=.5\linewidth]{images/neural-architecture.png}
-            \caption{}
-        \end{subfigure}
-        \begin{subfigure}{.4\linewidth}
-            \centering
-            \includegraphics[width=.75\linewidth]{images/normalize-zca.png}
-        \caption{}
-        \end{subfigure}
-        \begin{subfigure}{.1\linewidth}
-            \centering
-            \includegraphics[width=\linewidth]{images/patch-clusters-few.png}
-        \caption{}
-        \end{subfigure}
-        \caption{(a) Architecture of the neural network used in our approach (b) Normalizing and ZCA on the individual patches (c) A subset of the learned patches after kmeans clustering}
-    \end{figure}
- 
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \subsection{Multi-layer Perceptron} % (fold)
-    \label{sub:Multi-layer Perceptron}
-        For our test, we use a simple multi-layer perceptron with backpropagation for training. The neural network consists of three layers: an input layer consisting of 16000 neurons, a hidden layer consisting of 512 neurons and an output layer of 10 neurons. We use the sigmoid activation function for each neuron.
-
-        Experimentally, we found that feeding the pixel values of the image produces a low classification accuracy. When using HOG features, we found the accuracy dropped further. To get around this, we first pre-process each training image as described in the next section.
-    % subsection Multi-layer Perceptron (end)
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \subsection{Pre-processing} % (fold)
-    \label{sub:Pre-processing}
-        Directly feeding raw pixels into the neural network produces low accuracies (about 31\%). This is worse than the performance of some simpler machine learning techniques. We implemented the preprocessing steps mentioned in [5] to improve the performance of the neural network. 
-
-        The first step is to split a given 32x32x3 image into small patches. We extracted 6x6x3 patches from a given training image using a moving window. This produces 729 patches per image. This is applied to all training samples.
-
-        These patches are then normalized and whitened using the Mahalanobis transformation. Normalizing a patch $I_n$ is simply subtracting the mean $\mu(I)$ from the patch $I$ and dividing by the standard deviation $\sigma(I)$. This produces images with pixel values approximately in the range of -1 to +1.
-        
-        \begin{align*}
-            \textbf{I}_{n}(x, y) &= \frac{\textbf{I}(x, y) - \mu(\textbf{I})}{\sigma(\textbf{I})}\\
-        \end{align*}
-
-        The Mahalanobis transformation [6] is used to transform the covariance of the input samples into an identity matrix. To calculate this, we need to calculate the eigenvalues and eigenvectors of the covariance matrix using SVD. We then compute the transformation \textbf{$W_{M}$} as shown below. Compared to principal component analysis, this transformation tries to rotate the input data as little as possible and is thus better suited for this application.
-
-        \begin{align*}
-            \textbf{C} &= \frac{\textbf{X}^{T}\textbf{X}}{n} & \text{(Where $X$ is the $n\times d$ feature vector)}\\
-            &= \textbf{EDE}^{T} & \text{(\textbf{E} is eigenvectors, \textbf{D} is eigenvalues as diagonal matrix)}\\
-            \textbf{W}_{M} &= \textbf{ED}^{-\frac{1}{2}}\textbf{E}^{T}\\
-        \end{align*}
-
-        We now use the normalized and whitened patches to learn features in the input images. The paper [5] mentions several techniques including auto-encoders, RBMs and GMMs. However, in our implementation, we use the mathematically simpler k-means clustering with K=4000. This produces the centroids of the most commonly appearing 6x6x3 patches in the input dataset. This step is equivalent to learning all the distinct edges in input samples.
-
-        We can now approximately reconstruct the source image in terms of learned centroids. This produces a 729*4000 feature vector. Each patch in the source image corresponds to exactly one learned centroid - thus the feature vector is sparse and contains at most 729 ones. Since this is a very big feature vector, we run it through pooling.
-
-        We pool the feature vector from a 32x32 grid into a 2x2 grid. The resulting feature vector is 4*4000 elements long. This is exactly the number of input neurons used by our neural network.
-    % subsection Pre-processing (end)
-
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \subsection{Results} % (fold)
-    \label{sub:Results}
-        We tried two different techniques with neural networks. In the first, we input raw pixels directly into the neural network. In this configuration, the neural network had 108, 512 and 10 neurons in the input, hidden and output layers respectively. Training this on the supplied dataset, we found that the average accuracy of the neural network was about 31\% with leave one out cross validation. This is worse than the accuracy obtained in previous sections.
-
-        The second approach was to pre-process input images and produce a 16000 long feature vector for each image. This produced an accuracy of about 51.2\% with leave one out cross validation. This is still lower than approaches described earlier.
-
-        We found that running the pre-processing steps on Autolab always timed out. Extracting patches and whitening them both take a large amount of time when using Octave. This combined with the large neural network always timed out when we submitted three classifiers at the same time.
-
-        To overcome this, we tried writing C++ functions for our technique using the Octave binary compiler (\texttt{mkoctfile}), however, neither Autolab nor Virtual Andrew seem to support it. Thus, we had to discard the neural network approach altogether and consider a computationally less expensive algorithm.
-    % subsection Runtime (end)
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Future work}
     Until now, we have achieved a maximum accuracy of 55\%. We have used simple techniques like k-means, k-nearest and more sophisticated techniques like SVM. Our next trial will be with a discriminative sum-product networks. The paper claims to achieve a high accuracy using a network approach and using gradient descent.
 
-\subsubsection*{References}
+{\small{
+\begin{thebibliography}{11}
 
-\small{
-[1] Navneet Dalal and Bill Triggs, Histograms of Oriented Gradients for Human Detection,\textit{CVPR, 2005}
+\bibitem{dalal}
+Navneet Dalal and Bill Triggs, Histograms of Oriented Gradients for Human Detection,\textit{CVPR, 2005}
 
-%[2] David Lowe, et al Distinctive Image Features from Scale-Invariant Keypoints, \textit{IJCV, 2004}
-
-[2] Christian Saigian, et al. Rapid Biologically-Inspired Scene Classification Using Features
+\bibitem{Christian}
+Christian Saigian, et al. Rapid Biologically-Inspired Scene Classification Using Features
 Shared with Visual Attention, Pattern Analysis and Machine Intelligence, 2007
 
-[3] R.Muralidharan, et al. Object Recognition Using Support Vector Machine Augmented
+\bibitem{Muralidharan}
+R. Muralidharan, et al. Object Recognition Using Support Vector Machine Augmented
 by RST Invariants, \textit{IJCSI, 2011}
 
-[4] R Gens, et al. Discriminative learning of sum-product networks, Washington University,
+\bibitem{sumproduct}
+R. Gens, et al. Discriminative learning of sum-product networks, Washington University,
 2012
 
-[5] Adam Coates, Andrew Ng, et al. An analysis ofsingle layer networks in unsupervised feature learning, NIPS 2011
+\bibitem{andrew}
+Adam Coates, Andrew Ng, et al. An analysis of single layer networks in unsupervised feature learning, NIPS 2011
 
-[5] Anthony J. Bell, et al. Edges are the 'independent components' of natural scenes, NCBI 1997
+\bibitem{anthony}
+Anthony J. Bell, et al. Edges are the 'independent components' of natural scenes, NCBI 1997
+
+\end{thebibliography}
 
 \end{document}
