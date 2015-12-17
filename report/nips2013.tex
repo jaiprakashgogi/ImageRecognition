@@ -9,7 +9,7 @@
 \usepackage{color}
 %\documentstyle[nips2013submit_09,times,art10]{article} % For LaTeX 2.09
 
-\author{Jai Prakash \\ \textbf{email:} jprakash@andrew.cmu.edu}
+\author{Jai Prakash, Utkarsh Sinha \\ \textbf{Email:} jprakash@andrew.cmu.edu, usinha@andrew.cmu.edu}
 
 \title{10-601b: Project Report\\Image classification on CIFAR-10 dataset
 }
@@ -57,7 +57,7 @@
 \newcommand{\fix}{\marginpar{FIX}}
 \newcommand{\new}{\marginpar{NEW}}
 
-%\nipsfinalcopy % Uncomment for camera-ready version
+\nipsfinalcopy % Uncomment for camera-ready version
 
 \begin{document}
 \maketitle
@@ -84,29 +84,29 @@ The best results on CIFAR dataset is given by deep neural networks. The list of 
 
     Finally, we constructed the \textbf{average image of each class}. This was to look for specific patterns that might exist in the dataset. Any sharp patterns in the average image would skew training performance. However, we did not find any such patterns with the given dataset.
 
-    \begin{figure}[h]
+    \begin{figure}
         \centering
         \begin{subfigure}{.2\linewidth}
             \centering
-            \includegraphics[width=.75\linewidth]{images/label-distribution.png}
-        \caption{Distribution of the ground truth labels}
+            \includegraphics[width=\linewidth]{images/label-distribution.png}
+        \caption{}
         \end{subfigure}
         \begin{subfigure}{.2\linewidth}
             \centering
             \includegraphics[width=\linewidth]{images/hist-overall.png}
-        \caption{Distribution of RGB across all images}
+        \caption{}
         \end{subfigure}
         \begin{subfigure}{.2\linewidth}
             \centering
             \includegraphics[width=\linewidth]{images/avg-img.png}
-        \caption{The average image for each class}
+        \caption{}
         \end{subfigure}
         \begin{subfigure}{.2\linewidth}
             \centering
-            \includegraphics[width=.5\linewidth]{images/knn-confusion.png}
-            \caption{Confusion matrix for k-NN}
+            \includegraphics[width=.75\linewidth]{images/knn-confusion.png}
+            \caption{}
         \end{subfigure}
-        \caption{}
+        \caption{(a) Distribution of the ground truth labels (b) Distribution of RGB across all images (c) The average image for each class (d) Confusion matrix for k-NN}
     \end{figure}
     
     
@@ -139,9 +139,9 @@ The first attempt was to use the raw image data and K-means clustering algorithm
         The next attempt was to cluster responses from a filter bank. We used two sets of filter banks - regular filters and \textbf{Gabor filters}. The training time for this increased further but produced a very tiny increase in accuracy (about 16.7\%). Given the training time required for K-means and the accuracy, we decided to try K-nearest neighbours. The voting algorithm would be robust to noise in the training inputs.
 
 \subsection{K-Nearest Neighbours} % (fold)
-We used the K-nearest neighbours on three different feature spaces. The first was raw images. The accuracy was almost as good as the K-means classifier. Second, we tried passing images through the filter bank and Gabor filters used in the previous section. The results were better than K-means (~29\%). This increase in accuracy can be attributed to the classifier being robust when the input training samples are noisy. We used $K=51$ to achieve this result.
+We used the K-nearest neighbours on three different feature spaces. The first was raw images. The accuracy was almost as good as the K-means classifier. Second, we tried passing images through the filter bank and Gabor filters used in the previous section. The results were better than K-means (about 29\%). This increase in accuracy can be attributed to the classifier being robust when the input training samples are noisy. We used $K=51$ to achieve this result.
 
-        To improve accuracy further, we calculated the Histogram of Gradients features on the image and used those for classification. This improved the accuracy to ~53\%. The improvement was because certain classes in the image can be represented accurately with orientation histograms (cars, for example).
+        To improve accuracy further, we calculated the Histogram of Gradients features on the image and used those for classification. This improved the accuracy to about 53\%. The improvement was because certain classes in the image can be represented accurately with orientation histograms (cars, for example).
     % subsection K-Nearest Neighbours (end)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -187,10 +187,83 @@ To further improve the classification, we have implemented contrast normalizatio
 
 Also, the margin in SVM plays an important role to decide the accuracy of the classifier. This margin decides decides the extent of over-fitting in the model. A margin of $C=0.1$ yields optimum performance.
 
+\section{Neural network}
+\label{sub:neural}
+    Something something
+    \begin{figure}
+        \centering
+        \begin{subfigure}{.3\linewidth}
+            \centering
+            \includegraphics[width=.5\linewidth]{images/neural-architecture.png}
+            \caption{}
+        \end{subfigure}
+        \begin{subfigure}{.4\linewidth}
+            \centering
+            \includegraphics[width=.75\linewidth]{images/normalize-zca.png}
+        \caption{}
+        \end{subfigure}
+        \begin{subfigure}{.1\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{images/patch-clusters-few.png}
+        \caption{}
+        \end{subfigure}
+        \caption{(a) Architecture of the neural network used in our approach (b) Normalizing and ZCA on the individual patches (c) A subset of the learned patches after kmeans clustering}
+    \end{figure}
+ 
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Multi-layer Perceptron} % (fold)
+    \label{sub:Multi-layer Perceptron}
+        For our test, we use a simple multi-layer perceptron with backpropagation for training. The neural network consists of three layers: an input layer consisting of 16000 neurons, a hidden layer consisting of 512 neurons and an output layer of 10 neurons. We use the sigmoid activation function for each neuron.
+
+        Experimentally, we found that feeding the pixel values of the image produces a low classification accuracy. When using HOG features, we found the accuracy dropped further. To get around this, we first pre-process each training image as described in the next section.
+    % subsection Multi-layer Perceptron (end)
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Pre-processing} % (fold)
+    \label{sub:Pre-processing}
+        Directly feeding raw pixels into the neural network produces low accuracies (about 31\%). This is worse than the performance of some simpler machine learning techniques. We implemented the preprocessing steps mentioned in [5] to improve the performance of the neural network. 
+
+        The first step is to split a given 32x32x3 image into small patches. We extracted 6x6x3 patches from a given training image using a moving window. This produces 729 patches per image. This is applied to all training samples.
+
+        These patches are then normalized and whitened using the Mahalanobis transformation. Normalizing a patch $I_n$ is simply subtracting the mean $\mu(I)$ from the patch $I$ and dividing by the standard deviation $\sigma(I)$. This produces images with pixel values approximately in the range of -1 to +1.
+        
+        \begin{align*}
+            \textbf{I}_{n}(x, y) &= \frac{\textbf{I}(x, y) - \mu(\textbf{I})}{\sigma(\textbf{I})}\\
+        \end{align*}
+
+        The Mahalanobis transformation [6] is used to transform the covariance of the input samples into an identity matrix. To calculate this, we need to calculate the eigenvalues and eigenvectors of the covariance matrix using SVD. We then compute the transformation \textbf{$W_{M}$} as shown below. Compared to principal component analysis, this transformation tries to rotate the input data as little as possible and is thus better suited for this application.
+
+        \begin{align*}
+            \textbf{C} &= \frac{\textbf{X}^{T}\textbf{X}}{n} & \text{(Where $X$ is the $n\times d$ feature vector)}\\
+            &= \textbf{EDE}^{T} & \text{(\textbf{E} is eigenvectors, \textbf{D} is eigenvalues as diagonal matrix)}\\
+            \textbf{W}_{M} &= \textbf{ED}^{-\frac{1}{2}}\textbf{E}^{T}\\
+        \end{align*}
+
+        We now use the normalized and whitened patches to learn features in the input images. The paper [5] mentions several techniques including auto-encoders, RBMs and GMMs. However, in our implementation, we use the mathematically simpler k-means clustering with K=4000. This produces the centroids of the most commonly appearing 6x6x3 patches in the input dataset. This step is equivalent to learning all the distinct edges in input samples.
+
+        We can now approximately reconstruct the source image in terms of learned centroids. This produces a 729*4000 feature vector. Each patch in the source image corresponds to exactly one learned centroid - thus the feature vector is sparse and contains at most 729 ones. Since this is a very big feature vector, we run it through pooling.
+
+        We pool the feature vector from a 32x32 grid into a 2x2 grid. The resulting feature vector is 4*4000 elements long. This is exactly the number of input neurons used by our neural network.
+    % subsection Pre-processing (end)
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Results} % (fold)
+    \label{sub:Results}
+        We tried two different techniques with neural networks. In the first, we input raw pixels directly into the neural network. In this configuration, the neural network had 108, 512 and 10 neurons in the input, hidden and output layers respectively. Training this on the supplied dataset, we found that the average accuracy of the neural network was about 31\% with leave one out cross validation. This is worse than the accuracy obtained in previous sections.
+
+        The second approach was to pre-process input images and produce a 16000 long feature vector for each image. This produced an accuracy of about 51.2\% with leave one out cross validation. This is still lower than approaches described earlier.
+
+        We found that running the pre-processing steps on Autolab always timed out. Extracting patches and whitening them both take a large amount of time when using Octave. This combined with the large neural network always timed out when we submitted three classifiers at the same time.
+
+        To overcome this, we tried writing C++ functions for our technique using the Octave binary compiler (\texttt{mkoctfile}), however, neither Autolab nor Virtual Andrew seem to support it. Thus, we had to discard the neural network approach altogether and consider a computationally less expensive algorithm.
+    % subsection Runtime (end)
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Results} % (fold)
 \label{sub:Results}
-    Upon analysing the confusion matrix for K-Nearest neighbours (Figure 1 (d)), we found that the perfectly classified labels belonged to classes with several sharp and well defined edges - cars, airplanes, ships, trucks. The horse and frog classes seem to perform quite well too - however, the bird, cat, deer and dog classes are harder to classify.\\
+    Upon analysing the confusion matrix for K-Nearest neighbours (Figure 1 (d)), we found that the perfectly classified labels belonged to classes with several sharp and well defined edges - cars, airplanes, ships, trucks. The horse and frog classes seem to perform quite well too - however, the bird, cat, deer and dog classes are harder to classify.
 
         From this, we can infer why the classifier fails. At such low resolutions, the HOG features are unable to capture the distinctive features of these classes. Most of them seem to be mammals with 4 legs and thus the confusion. Using HOG with higher resolutions (with smaller cell sizes), we found that accuracy of the classifier decreased to below 50\% with no increase in accuracy on the problematic classes. The results of k-means and k-nearest neighbours are summarized in Table \ref{tab:knn}.
         
@@ -265,5 +338,9 @@ by RST Invariants, \textit{IJCSI, 2011}
 
 [4] R Gens, et al. Discriminative learning of sum-product networks, Washington University,
 2012
+
+[5] Adam Coates, Andrew Ng, et al. An analysis ofsingle layer networks in unsupervised feature learning, NIPS 2011
+
+[5] Anthony J. Bell, et al. Edges are the 'independent components' of natural scenes, NCBI 1997
 
 \end{document}
